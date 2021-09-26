@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import simpy as sp
 from random import expovariate
@@ -12,8 +13,7 @@ def voter_sim(
     per_start,
     per_end,
     arrival_rt,
-    num_machines,
-    loud=0
+    num_machines
 ):
     RANDOM_SEED = 56  # for repeatability during testing
     SIM_TIME = (per_end - per_start) * 60  # simulation time in minutes
@@ -32,11 +32,12 @@ def voter_sim(
         def vote(self, voter):
             # randomly generate voting time
             voting_time = vote_time()
-            # voting_time = np.random.triangular(min_vote_time, mode_vote_time, max_vote_time, size=None)
+
             yield self.env.timeout(voting_time)
+
             res_df.loc[res_df.Voter == voter, 'Voting_Time'] = voting_time
-            if (loud == 1):
-                print("%s voted in %d minutes." % (voter, voting_time))
+
+            logging.debug(f'{voter} voted in {voting_time} minutes.')
 
     def voter(
         env,
@@ -47,17 +48,21 @@ def voter_sim(
         # Indicates that this row of the results df is used
         res_df.loc[res_df.Voter == name, 'Used'] = 1
         res_df.loc[res_df.Voter == name, 'Arrival_Time'] = env.now
-        if (loud == 1):
-            print('%s arrives at the polls at %.2f.' % (name, env.now))
+
+        logging.debug(f'{name} arrives at the polls at {env.now:.2f}.')
+
         with vm.machine.request() as request:
             yield request
+
             res_df.loc[res_df.Voter == name, 'Voting_Start_Time'] = env.now
-            if (loud == 1):
-                print('%s enters the polls at %.2f.' % (name, env.now))
+
+            logging.debug(f'{name} enters the polls at {env.now:.2f}.')
+
             yield env.process(vm.vote(name))
+
             res_df.loc[res_df.Voter == name, 'Departure_Time'] = env.now
-            if (loud == 1):
-                print('%s leaves the polls at %.2f.' % (name, env.now))
+
+            logging.debug(f'{name} leaves the polls at {env.now:.2f}.')
 
     def setup(
         env,

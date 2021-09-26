@@ -1,7 +1,7 @@
 import logging
 
 
-def set_logging_level(logger: logging.Logger, level: str):
+def set_logging_level(level: str):
     levels = {
         'critical': logging.CRITICAL,
         'error': logging.ERROR,
@@ -17,4 +17,7 @@ def set_logging_level(logger: logging.Logger, level: str):
             f'--log must be one of: {" | ".join(levels.keys())}'
         )
 
-    logger.setLevel(levels[level])
+    logging.basicConfig(
+        level=levels[level],
+        format='%(levelname)s - %(message)s'
+    )

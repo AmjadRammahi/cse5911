@@ -14,8 +14,6 @@ parser.add_argument('input_xlsx', type=str,
                     help='first positional argument, input xlsx filepath')
 parser.add_argument('--log', default='info', help='log level, ex: --log debug')
 
-logger = logging.getLogger()
-
 
 # ===============================================================================
 # Globals
@@ -239,9 +237,9 @@ def izgbs(
     cur_upper = total_num
 
     while (hyps_rem):
-        print(f'Num Test: {num_test}')
-        print(f'Current Upper: {cur_upper}')
-        print(f'Current Lower {cur_lower}')
+        logging.info(f'Num Test: {num_test}')
+        logging.info(f'Current Upper: {cur_upper}')
+        logging.info(f'Current Lower {cur_lower}')
 
         first_rep = 1
 
@@ -258,8 +256,7 @@ def izgbs(
                 POLL_START,
                 POLL_END,
                 arrival_rt,
-                num_test,
-                loud=0
+                num_test
             )
 
             # only keep results records that were actually used
@@ -306,7 +303,7 @@ def izgbs(
         max_std = batch_avgs['Max_Waiting_Time'].std()
 
         batch_avgs.head()
-        print(avg_avg, max_avg, max_std)
+        logging.debug(avg_avg, max_avg, max_std)
 
         # populate results
         feasible_df.loc[feasible_df.Machines == num_test, 'BatchAvg'] = avg_avg
@@ -321,20 +318,20 @@ def izgbs(
             # feasible
             if (p < SASalphaValue):
                 feasible_df.loc[feasible_df.Machines >= num_test, 'Feasible'] = 1
-                print('scenario 1')
+                logging.debug('scenario 1')
                 # Move to lower half
                 cur_upper = num_test
                 t = math.floor((cur_upper - cur_lower) / 2)
                 num_test = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
-                print('scenario2')
+                logging.debug('scenario2')
                 # Move to upper half
                 feasible_df.loc[feasible_df.Machines == num_test, 'Feasible'] = 0
                 cur_lower = num_test
                 num_test = math.floor((cur_upper - num_test) / 2) + cur_lower
             # Declare feasible if Std = 0??
         else:
-            print('scenario3')
+            logging.debug('scenario3')
             feasible_df.loc[feasible_df.Machines >= num_test, 'Feasible'] = 1
             # Move to lower half
             cur_upper = num_test
@@ -351,7 +348,7 @@ def izgbs(
         else:
             hyps_rem = 0
 
-    print(feasible_df)
+    logging.info(feasible_df)
 
     return feasible_df
 
@@ -374,9 +371,9 @@ def fetch_location_data(voting_config: xlrd.Book) -> list:
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    set_logging_level(logger, args.log)
+    set_logging_level(args.log)
 
-    logger.info(f'reading {args.input_xlsx}')
+    logging.info(f'reading {args.input_xlsx}')
     voting_config = xlrd.open_workbook(args.input_xlsx)
 
     # get voting locations from input xlsx file
@@ -413,7 +410,7 @@ if __name__ == '__main__':
     loc_df_results = create_loc_df(NUM_LOCATIONS + 1)
 
     for i in range(1, NUM_LOCATIONS):
-        logger.info(f'Starting Location: {i}')
+        logging.info(f'Starting Location: {i}')
 
         # Placeholder, use a different start value for later machines?
         if (MIN_ALLOC_FLG):
@@ -461,4 +458,4 @@ if __name__ == '__main__':
                 loc_df_results.Locations == str(i), 'Exp. Max. Wait Time'
             ] = loc_feas_min.iloc[0]['BatchAvgMax']
 
-            print(loc_df_results)
+            logging.info(loc_df_results)
