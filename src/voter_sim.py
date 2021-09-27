@@ -1,3 +1,4 @@
+import os  # TODO: use this to clean up voter_sim - Collin
 import logging
 import numpy as np
 import simpy as sp
@@ -15,6 +16,25 @@ def voter_sim(
     arrival_rt,
     num_machines
 ):
+    '''
+        TODO.
+
+        # TODO: move these params to os.environ.
+        # Once done move these inner functions/class out to file scope - Collin
+        Params:
+            res_df () TODO,
+            max_voter () TODO,
+            vote_time_min () TODO,
+            vote_time_mode () TODO,
+            vote_time_max () TODO,
+            per_start () TODO,
+            per_end () TODO,
+            arrival_rt () TODO,
+            num_machines () TODO.
+
+        Returns:
+            TODO.
+    '''
     RANDOM_SEED = 56  # for repeatability during testing
     SIM_TIME = (per_end - per_start) * 60  # simulation time in minutes
 
