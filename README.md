@@ -29,5 +29,7 @@ python3 voting_resource_optimization.py voting_excel.xlsx
 
 ## TODOs
 * Remove pandas from the codebase
-* Setup an EC2 instance to benchmark the code
 * Unit test the IZGBS code
+
+## Notes
+* Initial runtime of the code was 1622.43 seconds (benchmarked on OSC).
