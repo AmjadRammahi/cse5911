@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import xlrd
 import math
 import time
@@ -7,9 +9,13 @@ import numpy as np
 import pandas as pd
 import scipy.stats as st
 from tqdm import tqdm
+from typing import Union
 
+import settings
 from src.util import set_logging_level
 from src.voter_sim import voter_sim
+from src.data_set import DataSet
+from src.fetch_location_data import fetch_location_data
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -28,6 +34,8 @@ parser.add_argument(
 # ===============================================================================
 # Globals
 
+# TODO: need to move a lot of these globals into settings.py so they are easier to unit test - Collin
+
 # Placeholder for input parameters
 # Options: Apportionment, Allocation
 prob_type = 'apportionment'  # NOTE: unused
@@ -45,14 +53,6 @@ time_delta = 0.5  # NOTE: unused - time increment in minutes
 ALPHA_VALUE = 0.05  # Probability of rejecting the null hypotheses
 DELTA_IZ = 0.5  # Indifference zone parameter
 NUM_REPLICATIONS = 100
-
-# deluxe version variable placeholders
-# 5:30, 6:30, 7:30
-EARLY_START = 5.5  # NOTE: effectively unused
-POLL_START = 6.5
-POLL_END = 19.5
-Poll_Hours = (POLL_END - POLL_START) * 24  # NOTE: unused
-EarlyVoterHours = POLL_START - EARLY_START
 
 # waiting time of voter who waits the longest
 SERVICE_REQ = 30
@@ -97,9 +97,6 @@ NUM_MACHINES = 50  # NOTE: this was a local car, promoted it to global - Collin
 
 # Calculate number of batches
 NUM_BATCHES = NUM_REPLICATIONS / BATCH_SIZE
-
-# Add voter average arrivals in minutes
-POLL_OPEN = POLL_END - POLL_START
 
 # Create results arrays
 avgResources = np.zeros(NUM_LOCATIONS)  # NOTE: unused
@@ -241,7 +238,8 @@ def izgbs(
     total_num,
     start,
     min_val,
-    alpha
+    alpha,
+    location_data: DataSet
 ):
     '''
         Main IZGBS function. TODO: fill out function desc
@@ -251,15 +249,21 @@ def izgbs(
             total_num () : TODO,
             start () : TODO,
             min_val () : TODO,
-            alpha () : TODO.
+            alpha () : TODO,
+            location_data (DataSet) : location tab of input xlsx.
 
         Returns:
             () : TODO.
     '''
     # read in parameters from locations dataframe
-    voters_max = voting_machines['Eligible Voters'].loc[vote_loc]
-    ballot_lth = voting_machines['Ballot Length Measure'].loc[vote_loc]
-    arrival_rt = voting_machines['Arrival_mean'].loc[vote_loc]
+    # voters_max = location_data['Eligible Voters'].loc[vote_loc]
+    # ballot_lth = location_data['Ballot Length Measure'].loc[vote_loc]
+    # arrival_rt = location_data['Arrival_mean'].loc[vote_loc]
+    for row in location_data:
+        if row[0] == vote_loc:
+            voters_max = row[2]
+            ballot_lth = row[3]
+            arrival_rt = row[5]
 
     # calculate voting times
     vote_min, vote_mode, vote_max, vote_avg = voting_time_calcs(ballot_lth)
@@ -289,8 +293,6 @@ def izgbs(
                 vote_min,
                 vote_mode,
                 vote_max,
-                POLL_START,
-                POLL_END,
                 arrival_rt,
                 num_test
             )
@@ -383,13 +385,17 @@ def izgbs(
     return feasible_df
 
 
-# TODO: give this a more proper name - Collin
-def evaluate_location(loc_df_results, i) -> None:
+def evaluate_location(
+    loc_df_results,
+    location_data: DataSet,
+    i: int
+) -> None:
     '''
         Runs IZGBS on a specified location, stores results in loc_df_results.
 
         Params:
             loc_df_results () : TODO,
+            location_data (DataSet) : location table of input xlsx,
             i (int) : location index.
 
         Returns:
@@ -407,7 +413,8 @@ def evaluate_location(loc_df_results, i) -> None:
             MAX_MACHINES,
             start_val,
             MIN_ALLOC,
-            sas_alpha_value
+            sas_alpha_value,
+            location_data
         )
     else:
         start_val = math.ceil((MAX_MACHINES - 1) / 2)
@@ -418,7 +425,8 @@ def evaluate_location(loc_df_results, i) -> None:
             NUM_MACHINES,
             start_val,
             2,
-            sas_alpha_value
+            sas_alpha_value,
+            location_data
         )
 
     loc_feas = loc_res[loc_res['Feasible'] == 1].copy()
@@ -449,23 +457,6 @@ def evaluate_location(loc_df_results, i) -> None:
         logging.info(loc_df_results)
 
 
-def fetch_location_data(voting_config: xlrd.Book) -> list:
-    location_sheet = voting_config.sheet_by_name(u'locations')
-
-    location_data = []
-
-    for i in range(location_sheet.nrows):
-        location_data.append(
-            location_sheet.row_values(
-                i,
-                start_colx=0,
-                end_colx=None
-            )
-        )
-
-    return location_data
-
-
 if __name__ == '__main__':
     args = parser.parse_args()
 
@@ -474,42 +465,13 @@ if __name__ == '__main__':
     # =========================================================================
     # Setup
 
+    settings.init()
+
     logging.info(f'reading {args.input_xlsx}')
     voting_config = xlrd.open_workbook(args.input_xlsx)
 
-    # get voting locations from input xlsx file
+    # get voting location data from input xlsx file
     location_data = fetch_location_data(voting_config)
-
-    voting_machines = pd.DataFrame(location_data)
-    voting_machines.columns = voting_machines.iloc[0]
-    voting_machines = voting_machines.iloc[1:]
-
-    # sort voting location for optimization
-    voting_machines.sort_values(
-        ['Likely or Exp. Voters', 'Eligible Voters', 'Ballot Length Measure'],
-        ascending=False,
-        inplace=True
-    )
-
-    # create location ID specific to new sort order
-    voting_machines['Loc_ID'] = (voting_machines.index + 1).astype('int')
-    voting_machines.head()
-
-    # convert columns to numeric so they can be used for calculations
-    voting_machine_nums = [
-        'Likely or Exp. Voters',
-        'Eligible Voters',
-        'Ballot Length Measure'
-    ]
-    voting_machines[voting_machine_nums] = voting_machines[voting_machine_nums].astype('int')
-
-    # convert ID to int
-    voting_machines['ID'] = voting_machines['ID'].astype('int')
-
-    voting_machines['Arrival_mean'] = \
-        voting_machines['Likely or Exp. Voters'] / POLL_OPEN / 60
-
-    voting_machines.head()
 
     loc_df_results = create_loc_df(NUM_LOCATIONS + 1)
 
@@ -519,7 +481,7 @@ if __name__ == '__main__':
     start_time = time.perf_counter()
 
     for i in range(1, NUM_LOCATIONS):
-        evaluate_location(loc_df_results, i)
+        evaluate_location(loc_df_results, location_data, i)
 
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')

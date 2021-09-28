@@ -1,2 +1,9 @@
+# vscode generated debugging launch file
 .vscode/launch.json
+
+# pycache's
 __pycache__
+
+# xlsx lock files
+.xlsx#
+

@@ -1,5 +1,3 @@
-import pytest
-
 from voting_resource_optimization import izgbs
 
 

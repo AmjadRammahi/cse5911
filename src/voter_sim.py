@@ -1,8 +1,9 @@
-import os  # TODO: use this to clean up voter_sim - Collin
 import logging
 import numpy as np
 import simpy as sp
 from random import expovariate
+
+import settings
 
 
 def voter_sim(
@@ -11,8 +12,6 @@ def voter_sim(
     vote_time_min,
     vote_time_mode,
     vote_time_max,
-    per_start,
-    per_end,
     arrival_rt,
     num_machines
 ):
@@ -27,8 +26,6 @@ def voter_sim(
             vote_time_min () TODO,
             vote_time_mode () TODO,
             vote_time_max () TODO,
-            per_start () TODO,
-            per_end () TODO,
             arrival_rt () TODO,
             num_machines () TODO.
 
@@ -36,7 +33,7 @@ def voter_sim(
             TODO.
     '''
     RANDOM_SEED = 56  # for repeatability during testing
-    SIM_TIME = (per_end - per_start) * 60  # simulation time in minutes
+    SIM_TIME = (settings.POLL_END - settings.POLL_START) * 60  # simulation time in minutes
 
     def vote_time():
         return np.random.triangular(vote_time_min, vote_time_mode, vote_time_max, size=None)
