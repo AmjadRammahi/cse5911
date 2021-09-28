@@ -1,7 +1,7 @@
 from typing import Union
 
 
-class DataFrame:
+class DataSet:
 
     def __init__(self, data: list = [], columns: dict = {}):
         self.data = data
