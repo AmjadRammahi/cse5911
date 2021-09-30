@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import cProfile        
+import pstats
 import xlrd
 import math
 import time
@@ -456,8 +458,7 @@ def evaluate_location(
 
         logging.info(loc_df_results)
 
-
-if __name__ == '__main__':
+def main():
     args = parser.parse_args()
 
     set_logging_level(args.log)
@@ -480,8 +481,18 @@ if __name__ == '__main__':
 
     start_time = time.perf_counter()
 
+        
     for i in range(1, NUM_LOCATIONS):
-        evaluate_location(loc_df_results, location_data, i)
+        # profile the simulation of each location
+        with cProfile.Profile() as pr:
+            evaluate_location(loc_df_results, location_data, i)
+        stats = pstats.Stats(pr)
+        stats.sort_stats(pstats.SortKey.TIME)
+        stats.dump_stats(filename= str(i) +'.prof')
 
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')
+
+
+if __name__ == '__main__':
+    main()
