@@ -38,3 +38,8 @@ MeanClosingTimes = np.zeros(NUM_LOCATIONS)  # NOTE: unused
 loc_sol = np.zeros(NUM_LOCATIONS)  # NOTE: unused - number machines
 loc_waits = np.zeros(NUM_LOCATIONS)  # NOTE: unused - voter wait times
 loc_ct = np.zeros(NUM_LOCATIONS)  # NOTE: unused
+
+
+EARLY_START = 5.5  # NOTE: effectively unused
+Poll_Hours = (POLL_END - POLL_START) * 24  # NOTE: unused
+EarlyVoterHours = POLL_START - EARLY_START  # NOTE: unused

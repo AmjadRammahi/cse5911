@@ -18,13 +18,10 @@ def init(overwrites: dict = {}) -> None:
     '''
     # deluxe version variable placeholders
     # 5:30, 6:30, 7:30
-    # EARLY_START = 5.5  # NOTE: effectively unused
     global POLL_START
     POLL_START = 6.5
     global POLL_END
     POLL_END = 19.5
-    # Poll_Hours = (POLL_END - POLL_START) * 24  # NOTE: unused
-    # EarlyVoterHours = POLL_START - EARLY_START  # NOTE: unused
 
     # Add voter average arrivals in minutes
     global POLL_OPEN
