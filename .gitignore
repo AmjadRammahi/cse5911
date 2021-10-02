@@ -8,7 +8,7 @@ __pycache__
 *.xlsx#
 
 # PyCharm virtual env
-venv/
+venv*/
 
 # PyCharm .idea directory
 .idea/
