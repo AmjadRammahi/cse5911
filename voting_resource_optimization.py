@@ -9,8 +9,9 @@ import numpy as np
 import pandas as pd
 import scipy.stats as st
 from tqdm import tqdm
-from typing import Union
+from typing import List, Union
 from statistics import mean
+from multiprocessing import Pool
 
 import settings
 from src.util import set_logging_level
@@ -328,9 +329,10 @@ def izgbs(
 
 
 def evaluate_location(
-    loc_df_results,
-    location_data: DataSet,
-    i: int
+    param: List
+    #loc_df_results,
+    #location_data: DataSet,
+    #i: int
 ) -> None:
     '''
         Runs IZGBS on a specified location, stores results in loc_df_results.
@@ -343,6 +345,9 @@ def evaluate_location(
         Returns:
             None.
     '''
+    loc_df_results = param[0]
+    location_data = param[1]
+    i = param[2]
     logging.info(f'Starting Location: {i}')
 
     # Placeholder, use a different start value for later machines?
@@ -409,6 +414,8 @@ if __name__ == '__main__':
 
     settings.init()
 
+    evaluation_param = list()
+
     logging.info(f'reading {args.input_xlsx}')
     voting_config = xlrd.open_workbook(args.input_xlsx)
 
@@ -423,7 +430,12 @@ if __name__ == '__main__':
     start_time = time.perf_counter()
 
     for i in range(1, NUM_LOCATIONS):
-        evaluate_location(loc_df_results, location_data, i)
+        params = [loc_df_results, location_data, i]
+        evaluation_param.append(params)
+
+    with Pool() as p:
+        p.map(evaluate_location, evaluation_param)
+        #evaluate_location(loc_df_results, location_data, i)
 
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')
