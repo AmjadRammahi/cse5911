@@ -1,4 +1,5 @@
 from __future__ import annotations
+from pandas.core.frame import DataFrame
 
 import xlrd
 import math
@@ -335,28 +336,23 @@ def izgbs(
 
 
 def evaluate_location(
-    #param: List
-    loc_df_results,
-    location_data: DataSet,
-    i: int,
-    lock: object
-) -> None:
+    param: List
+) -> dict:
     '''
-        Runs IZGBS on a specified location, stores results in loc_df_results.
+        Runs IZGBS on a specified location, return results in dict best_results.
 
         Params:
-            loc_df_results () : TODO,
+            param: a list contains two elements that required for this function- location_data, i
             location_data (DataSet) : location table of input xlsx,
             i (int) : location index.
 
         Returns:
-            None.
+            best_result: a dict contain all field that going to fill in result_df.
     '''
-    #loc_df_results = param[0]
-    #location_data = param[1]
-    #i = param[2]
+    best_result = dict()
+    location_data = param[0]
+    i = param[1]
 
-    #logging.info(f'Starting Location: {i}')
     print(f'Starting Location: {i}')
 
     # Placeholder, use a different start value for later machines?
@@ -388,6 +384,7 @@ def evaluate_location(
     loc_feas = loc_res[loc_res['Feasible'] == 1].copy()
     
     if not loc_feas.empty:
+        
         # calculate fewest feasible machines
         mach_min = loc_feas['Machines'].min()
 
@@ -395,25 +392,46 @@ def evaluate_location(
         loc_feas_min = loc_feas[loc_feas['Machines'] == mach_min].copy()
 
         # populate overall results with info for this location
-        lock.acquire()
-        print("LOCK mem address: ", hex(id(lock)))
-        loc_df_results.loc[
-            loc_df_results.Locations == str(i),
-            'Resource'
-        ] = mach_min
+        best_result['i'] = i
+        best_result['Resource'] = mach_min
+        best_result['Exp. Avg. Wait Time'] = loc_feas_min.iloc[0]['BatchAvg']
+        best_result['Exp. Max. Wait Time'] = loc_feas_min.iloc[0]['BatchAvgMax']
 
-        loc_df_results.loc[
-            loc_df_results.Locations == str(i),
-            'Exp. Avg. Wait Time'
-        ] = loc_feas_min.iloc[0]['BatchAvg']
-
-        loc_df_results.loc[
-            loc_df_results.Locations == str(i),
-            'Exp. Max. Wait Time'
-        ] = loc_feas_min.iloc[0]['BatchAvgMax']
-        lock.release()
         #logging.info(loc_df_results)
-        print(loc_df_results)
+
+        return best_result
+
+
+def populate_result_df(
+    results: list,
+    result_df: DataFrame
+) -> None:
+    '''
+        Store IZGBS run results in loc_df_results.
+
+        Params:
+            results : lists of result from izgbs,
+            result_df : an empty dataframe intended to host results,
+
+        Returns:
+            None.
+    '''
+    for result in results:
+        result_df.loc[
+            result_df.Locations == str(result['i']),
+            'Resource'
+        ] = result['Resource']
+
+        result_df.loc[
+            result_df.Locations == str(result['i']),
+            'Exp. Avg. Wait Time'
+        ] = result['Exp. Avg. Wait Time']
+
+        result_df.loc[
+            result_df.Locations == str(result['i']),
+            'Exp. Max. Wait Time'
+        ] = result['Exp. Max. Wait Time']
+    print(result_df)
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -436,28 +454,20 @@ if __name__ == '__main__':
     loc_df_results = create_loc_df(NUM_LOCATIONS + 1)
 
     processPool = list()
-    lock = multiprocessing.Lock()
     # =========================================================================
     # Main
 
     start_time = time.perf_counter()
 
     for i in range(1, NUM_LOCATIONS):
-        #params = [loc_df_results, location_data, i]
-        #evaluation_param.append(params)
-        #print(hex(id(lock)))
-        p = Process(target=evaluate_location, args=(loc_df_results, location_data, i, lock,))
-        processPool.append(p)
-        p.start()
+        params = [location_data, i]
+        evaluation_param.append(params)
 
-    #for p in processPool:
-    #    p.start()
-    
-    for p in processPool:
-        p.join()
-    #with Pool() as p:
-        #p.map(evaluate_location, evaluation_param)
-        #evaluate_location(loc_df_results, location_data, i)
-    #logging.info(loc_df_results)
+    results = list()
+    with Pool() as p:
+        results = p.map(evaluate_location, evaluation_param)
+
+    populate_result_df(results, loc_df_results)
+
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')
