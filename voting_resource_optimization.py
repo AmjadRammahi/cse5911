@@ -8,10 +8,13 @@ import argparse
 import numpy as np
 import pandas as pd
 import scipy.stats as st
+import multiprocessing
+import sys
 from tqdm import tqdm
 from typing import List, Union
 from statistics import mean
 from multiprocessing import Pool
+from multiprocessing import Process
 
 import settings
 from src.util import set_logging_level
@@ -31,7 +34,6 @@ parser.add_argument(
     default='info',
     help='log level, ex: --log debug'
 )
-
 
 # ===============================================================================
 # Globals
@@ -253,9 +255,12 @@ def izgbs(
     cur_lower = min_val
 
     while hypotheses_remain:
-        logging.info(f'Num Test: {num_test}')
-        logging.info(f'Current Upper: {cur_upper}')
-        logging.info(f'Current Lower: {cur_lower}')
+        #logging.info(f'Num Test: {num_test}')
+        #logging.info(f'Current Upper: {cur_upper}')
+        #logging.info(f'Current Lower: {cur_lower}')
+        print(f'Num Test: {num_test}')
+        print(f'Current Upper: {cur_upper}')
+        print(f'Current Lower: {cur_lower}')
 
         mean_wait_times = []
         max_wait_times = []
@@ -323,16 +328,18 @@ def izgbs(
         # check if there are hypotheses left to test
         hypotheses_remain = cur_lower < cur_upper and cur_lower < num_test < cur_upper
 
-    logging.info(feasible_df)
+    #logging.info(feasible_df)
+    print(feasible_df)
 
     return feasible_df
 
 
 def evaluate_location(
-    param: List
-    #loc_df_results,
-    #location_data: DataSet,
-    #i: int
+    #param: List
+    loc_df_results,
+    location_data: DataSet,
+    i: int,
+    lock: object
 ) -> None:
     '''
         Runs IZGBS on a specified location, stores results in loc_df_results.
@@ -345,10 +352,12 @@ def evaluate_location(
         Returns:
             None.
     '''
-    loc_df_results = param[0]
-    location_data = param[1]
-    i = param[2]
-    logging.info(f'Starting Location: {i}')
+    #loc_df_results = param[0]
+    #location_data = param[1]
+    #i = param[2]
+
+    #logging.info(f'Starting Location: {i}')
+    print(f'Starting Location: {i}')
 
     # Placeholder, use a different start value for later machines?
     if MIN_ALLOC_FLG:
@@ -377,7 +386,7 @@ def evaluate_location(
         )
 
     loc_feas = loc_res[loc_res['Feasible'] == 1].copy()
-
+    
     if not loc_feas.empty:
         # calculate fewest feasible machines
         mach_min = loc_feas['Machines'].min()
@@ -386,6 +395,8 @@ def evaluate_location(
         loc_feas_min = loc_feas[loc_feas['Machines'] == mach_min].copy()
 
         # populate overall results with info for this location
+        lock.acquire()
+        print("LOCK mem address: ", hex(id(lock)))
         loc_df_results.loc[
             loc_df_results.Locations == str(i),
             'Resource'
@@ -400,9 +411,9 @@ def evaluate_location(
             loc_df_results.Locations == str(i),
             'Exp. Max. Wait Time'
         ] = loc_feas_min.iloc[0]['BatchAvgMax']
-
-        logging.info(loc_df_results)
-
+        lock.release()
+        #logging.info(loc_df_results)
+        print(loc_df_results)
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -424,18 +435,29 @@ if __name__ == '__main__':
 
     loc_df_results = create_loc_df(NUM_LOCATIONS + 1)
 
+    processPool = list()
+    lock = multiprocessing.Lock()
     # =========================================================================
     # Main
 
     start_time = time.perf_counter()
 
     for i in range(1, NUM_LOCATIONS):
-        params = [loc_df_results, location_data, i]
-        evaluation_param.append(params)
+        #params = [loc_df_results, location_data, i]
+        #evaluation_param.append(params)
+        #print(hex(id(lock)))
+        p = Process(target=evaluate_location, args=(loc_df_results, location_data, i, lock,))
+        processPool.append(p)
+        p.start()
 
-    with Pool() as p:
-        p.map(evaluate_location, evaluation_param)
+    #for p in processPool:
+    #    p.start()
+    
+    for p in processPool:
+        p.join()
+    #with Pool() as p:
+        #p.map(evaluate_location, evaluation_param)
         #evaluate_location(loc_df_results, location_data, i)
-
+    #logging.info(loc_df_results)
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')
