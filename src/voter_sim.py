@@ -9,17 +9,17 @@ import settings
 class VotingLocation(object):
     def __init__(
         self,
-        env,
-        res_df,
-        max_voter,
-        num_machines,
-        vote_time_min,
-        vote_time_mode,
-        vote_time_max,
-        arrival_rt
+        env: simpy.Environment,
+        results_dict: dict,
+        max_voter: int,
+        num_machines: int,
+        vote_time_min: float,
+        vote_time_mode: float,
+        vote_time_max: float,
+        arrival_rt: float
     ):
         self.env = env
-        self.res_df = res_df
+        self.results_dict = results_dict
         self.max_voter = max_voter
         self.vote_time_min = vote_time_min
         self.vote_time_mode = vote_time_mode
@@ -69,9 +69,7 @@ class VotingLocation(object):
             Returns:
                 None.
         '''
-        # indicates that this row of the results df is used
-        self.res_df.loc[self.res_df.Voter == name, 'Used'] = 1
-        self.res_df.loc[self.res_df.Voter == name, 'Arrival_Time'] = self.env.now
+        self.results_dict[name]['Arrival_Time'] = self.env.now
 
         logging.debug(f'{name} arrives at the polls at {self.env.now:.2f}.')
 
@@ -80,15 +78,17 @@ class VotingLocation(object):
         with self.voting_machines.request() as request:
             yield request
 
-            self.res_df.loc[self.res_df.Voter == name, 'Voting_Start_Time'] = self.env.now
+            self.results_dict[name]['Voting_Start_Time'] = self.env.now
 
             logging.debug(f'{name} enters the polls at {self.env.now:.2f}.')
 
             yield self.env.process(self.vote(name))
 
-            self.res_df.loc[self.res_df.Voter == name, 'Departure_Time'] = self.env.now
+            self.results_dict[name]['Departure_Time'] = self.env.now
 
             logging.debug(f'{name} leaves the polls at {self.env.now:.2f}.')
+
+        self.results_dict[name]['Used'] = True
 
     def vote(self, name: str) -> None:
         '''
@@ -106,7 +106,7 @@ class VotingLocation(object):
 
         yield self.env.timeout(voting_time)
 
-        self.res_df.loc[self.res_df.Voter == name, 'Voting_Time'] = voting_time
+        self.results_dict[name]['Voting_Time'] = voting_time
 
         logging.debug(f'{name} voted in {voting_time} minutes.')
 
@@ -127,19 +127,19 @@ class VotingLocation(object):
 
 
 def voter_sim(
-    res_df,
-    max_voter,
-    vote_time_min,
-    vote_time_mode,
-    vote_time_max,
-    arrival_rt,
-    num_machines
-):
+    results_dict: dict,
+    max_voter: int,
+    vote_time_min: float,
+    vote_time_mode: float,
+    vote_time_max: float,
+    arrival_rt: float,
+    num_machines: int
+) -> None:
     '''
         Executes a voting simulation given various inputs.
 
         Params:
-            res_df (pd.DataFrame) : DataFrame for sim results,
+            results_dict (dict) : DataFrame for sim results,
             max_voter (int) : maximum number of voters,
             vote_time_min (float) : min voting time,
             vote_time_mode (float) : mode voting time,
@@ -148,7 +148,7 @@ def voter_sim(
             num_machines (int) : nuber of voting machines at the location.
 
         Returns:
-            (pd.DataFrame) : simulation results.
+            None.
     '''
     # RANDOM_SEED = 56  # for repeatability during testing
     # rand.seed(RANDOM_SEED)
@@ -159,9 +159,9 @@ def voter_sim(
     env = simpy.Environment()
 
     # create the voting location
-    voting_location = VotingLocation(
+    VotingLocation(
         env,
-        res_df,
+        results_dict,
         max_voter,
         num_machines,
         vote_time_min,
@@ -172,5 +172,3 @@ def voter_sim(
 
     # environment will run until end of simulation time
     env.run(until=SIM_TIME)
-
-    return voting_location.res_df
