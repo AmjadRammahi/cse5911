@@ -10,6 +10,7 @@ import pandas as pd
 import scipy.stats as st
 from tqdm import tqdm
 from typing import Union
+from statistics import mean
 
 import settings
 from src.util import set_logging_level
@@ -76,7 +77,7 @@ NUM_MACHINES = 50  # NOTE: this was a local var, promoted it to global - Collin
 # check_in_times = [0.9, 1.1, 2.9]
 
 # Calculate number of batches
-NUM_BATCHES = NUM_REPLICATIONS / BATCH_SIZE
+NUM_BATCHES = NUM_REPLICATIONS // BATCH_SIZE
 
 # machine_df contains estimated voters, max voters, and ballot length
 
@@ -86,6 +87,24 @@ num_test = 2
 
 # ===============================================================================
 # Utility Functions
+
+
+def calc_wait_times(results_dict: dict) -> tuple:
+    '''
+        Calculates the mean and max wait time for the voters of a simulation.
+
+        Params:
+            results_dict (dict) : voting simulation results.
+
+        Returns:
+            (tuple) : mean and max.
+    '''
+    wait_times = [
+        info['Voting_Start_Time'] - info['Arrival_Time']
+        for info in results_dict.values()
+    ]
+
+    return mean(wait_times), max(wait_times)
 
 
 def voting_time_calcs(ballot):
@@ -124,34 +143,22 @@ def voting_time_calcs(ballot):
     return vote_min, vote_mode, vote_max, vote_avg
 
 
-def create_results_df(max_voters):
+def create_results_dict(max_voters: int) -> dict:
     '''
-        This function is used to create an empty dataframe to store simulation results.
+        Creates a dict to store simulation results.
 
         Params:
-            max_voters () : TODO.
+            max_voters (int) : maximum number of possible voters.
 
         Returns:
-            TODO
+            (dict) : pre-initialized (to None values) results dict.
     '''
-    res_cols = [
-        'Replication',
-        'Voter',
-        'Arrival_Time',
-        'Voting_Start_Time',
-        'Voting_Time',
-        'Departure_Time',
-        'Waiting_Time',
-        'Total_Time',
-        'Used'
-    ]
-    # Results dataframe with a record for the max possible number of voters
-    voter_cols = np.zeros((max_voters, len(res_cols)))
-    voter_results = pd.DataFrame(voter_cols, columns=res_cols)
-    # Populates the voter ID field
-    voter_results['Voter'] = 'Voter ' + voter_results.index.astype('str')
-
-    return voter_results
+    return {
+        f'Voter {i}': {
+            'Used': False
+        }
+        for i in range(max_voters)
+    }
 
 
 def create_loc_df(vote_locs):
@@ -249,13 +256,15 @@ def izgbs(
         logging.info(f'Current Upper: {cur_upper}')
         logging.info(f'Current Lower: {cur_lower}')
 
-        # NOTE/TODO: starting this loop at 1 is sus, needs looked into - Collin
-        for i in range(1, NUM_REPLICATIONS):
-            results_df = create_results_df(voters_max)
+        mean_wait_times = []
+        max_wait_times = []
+
+        for _ in range(NUM_REPLICATIONS):
+            results_dict = create_results_dict(voters_max)
 
             # calculate voting times
-            results_df = voter_sim(
-                results_df,
+            voter_sim(
+                results_dict,
                 voters_max,
                 vote_min,
                 vote_mode,
@@ -265,60 +274,27 @@ def izgbs(
             )
 
             # only keep results records that were actually used
-            results_df = results_df[results_df['Used'] == 1].copy()
-            results_df['Replication'] = i
+            results_dict = {
+                name: info for name, info in results_dict.items()
+                if info['Used']
+            }
 
-            if i == 1:
-                final_loc_results = results_df.copy()
-            else:
-                final_loc_results = pd.concat([final_loc_results, results_df])
+            mean_wt, max_wt = calc_wait_times(results_dict)
+            mean_wait_times.append(mean_wt)
+            max_wait_times.append(max_wt)
 
-        # calculate waiting time
-        # need to drop voters that did not finish
-        final_loc_results['Waiting_Time'] = \
-            final_loc_results['Voting_Start_Time'] - final_loc_results['Arrival_Time']
-
-        final_loc_results['Total_Time'] = \
-            final_loc_results['Departure_Time'] - final_loc_results['Arrival_Time']
-
-        # calculate average and max waiting time by replication
-        replication_nums = final_loc_results.groupby(
-            ['Replication']
-        )['Waiting_Time'].agg(
-            ['max', 'mean']
-        ).reset_index()
-
-        # rename fields
-        replication_nums.rename(
-            columns={'max': 'Max_Waiting_Time', 'mean': 'Avg_Waiting_Time'},
-            inplace=True
-        )
-
-        # assign records to batches
-        replication_nums['Batch'] = replication_nums['Replication'] % NUM_BATCHES
-        replication_nums.head()
-
-        # calculate batch averages
-        calcs = ['Max_Waiting_Time', 'Avg_Waiting_Time']
-        batch_avgs = replication_nums.groupby(
-            'Batch'
-        )[['Max_Waiting_Time', 'Avg_Waiting_Time']].agg('mean').reset_index()
-
-        avg_avg = batch_avgs['Avg_Waiting_Time'].mean()
-        max_avg = batch_avgs['Max_Waiting_Time'].mean()
-        max_std = batch_avgs['Max_Waiting_Time'].std()
-
-        batch_avgs.head()
-        logging.debug(avg_avg, max_avg, max_std)
+        avg_wait_time_avg = mean(mean_wait_times)
+        max_wait_time_avg = mean(max_wait_times)
+        max_wait_time_std = np.std(max_wait_times)
 
         # populate results
-        feasible_df.loc[feasible_df.Machines == num_test, 'BatchAvg'] = avg_avg
-        feasible_df.loc[feasible_df.Machines == num_test, 'BatchAvgMax'] = max_avg
+        feasible_df.loc[feasible_df.Machines == num_test, 'BatchAvg'] = avg_wait_time_avg
+        feasible_df.loc[feasible_df.Machines == num_test, 'BatchAvgMax'] = max_wait_time_avg
 
         # calculate test statistic
-        if max_std > 0:
-            z = (max_avg - (SERVICE_REQ + DELTA_IZ)) / \
-                (max_std / math.sqrt(NUM_BATCHES))
+        if max_wait_time_std > 0:
+            z = (max_wait_time_avg - (SERVICE_REQ + DELTA_IZ)) / \
+                (max_wait_time_std / math.sqrt(NUM_BATCHES))
             p = st.norm.cdf(z)
 
             # feasible
@@ -327,7 +303,6 @@ def izgbs(
                 logging.debug('scenario 1')
                 # Move to lower half
                 cur_upper = num_test
-                t = math.floor((cur_upper - cur_lower) / 2)
                 num_test = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
                 logging.debug('scenario2')
