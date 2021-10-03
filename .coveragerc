@@ -1,0 +1,5 @@
+[run]
+omit = 
+	/venv/*
+	/venv3.9/*
+	/code_saves/*
