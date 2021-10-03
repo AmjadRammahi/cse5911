@@ -1,4 +1,3 @@
-from __future__ import annotations
 from pandas.core.frame import DataFrame
 
 import xlrd
@@ -46,7 +45,7 @@ MAX_MACHINES = 60
 # General variables
 # first and last voting locations. This allows results to be calculated for a subset of location
 FIRST_LOC = 1
-LAST_LOC = 5
+LAST_LOC = 41
 NUM_LOCATIONS = LAST_LOC - FIRST_LOC + 1
 
 ALPHA_VALUE = 0.05  # Probability of rejecting the null hypotheses
@@ -256,12 +255,9 @@ def izgbs(
     cur_lower = min_val
 
     while hypotheses_remain:
-        #logging.info(f'Num Test: {num_test}')
-        #logging.info(f'Current Upper: {cur_upper}')
-        #logging.info(f'Current Lower: {cur_lower}')
-        print(f'Num Test: {num_test}')
-        print(f'Current Upper: {cur_upper}')
-        print(f'Current Lower: {cur_lower}')
+        logging.info(f'Num Test: {num_test}')
+        logging.info(f'Current Upper: {cur_upper}')
+        logging.info(f'Current Lower: {cur_lower}')
 
         mean_wait_times = []
         max_wait_times = []
@@ -329,15 +325,12 @@ def izgbs(
         # check if there are hypotheses left to test
         hypotheses_remain = cur_lower < cur_upper and cur_lower < num_test < cur_upper
 
-    #logging.info(feasible_df)
-    print(feasible_df)
+    logging.info(feasible_df)
 
     return feasible_df
 
 
-def evaluate_location(
-    param: List
-) -> dict:
+def evaluate_location(param: list) -> dict:
     '''
         Runs IZGBS on a specified location, return results in dict best_results.
 
@@ -349,7 +342,7 @@ def evaluate_location(
         Returns:
             best_result: a dict contain all field that going to fill in result_df.
     '''
-    best_result = dict()
+    best_result = {}
     location_data = param[0]
     i = param[1]
 
@@ -382,9 +375,8 @@ def evaluate_location(
         )
 
     loc_feas = loc_res[loc_res['Feasible'] == 1].copy()
-    
+
     if not loc_feas.empty:
-        
         # calculate fewest feasible machines
         mach_min = loc_feas['Machines'].min()
 
@@ -397,21 +389,16 @@ def evaluate_location(
         best_result['Exp. Avg. Wait Time'] = loc_feas_min.iloc[0]['BatchAvg']
         best_result['Exp. Max. Wait Time'] = loc_feas_min.iloc[0]['BatchAvgMax']
 
-        #logging.info(loc_df_results)
-
         return best_result
 
 
-def populate_result_df(
-    results: list,
-    result_df: DataFrame
-) -> None:
+def populate_result_df(results: list, result_df: DataFrame) -> None:
     '''
         Store IZGBS run results in loc_df_results.
 
         Params:
-            results : lists of result from izgbs,
-            result_df : an empty dataframe intended to host results,
+            results (list) : lists of result from izgbs,
+            result_df (DataFrame) : an empty dataframe intended to host results.
 
         Returns:
             None.
@@ -431,7 +418,7 @@ def populate_result_df(
             result_df.Locations == str(result['i']),
             'Exp. Max. Wait Time'
         ] = result['Exp. Max. Wait Time']
-    print(result_df)
+
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -443,8 +430,6 @@ if __name__ == '__main__':
 
     settings.init()
 
-    evaluation_param = list()
-
     logging.info(f'reading {args.input_xlsx}')
     voting_config = xlrd.open_workbook(args.input_xlsx)
 
@@ -453,21 +438,22 @@ if __name__ == '__main__':
 
     loc_df_results = create_loc_df(NUM_LOCATIONS + 1)
 
-    processPool = list()
     # =========================================================================
     # Main
 
     start_time = time.perf_counter()
 
-    for i in range(1, NUM_LOCATIONS):
-        params = [location_data, i]
-        evaluation_param.append(params)
+    location_params = [
+        [location_data, i]
+        for i in range(1, NUM_LOCATIONS)
+    ]
 
-    results = list()
     with Pool() as p:
-        results = p.map(evaluate_location, evaluation_param)
+        results = p.map(evaluate_location, location_params)
 
     populate_result_df(results, loc_df_results)
+
+    print(loc_df_results)
 
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')
