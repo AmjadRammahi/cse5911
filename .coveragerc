@@ -1,5 +1,6 @@
 [run]
-omit = 
-	/venv/*
-	/venv3.9/*
-	/code_saves/*
+include =
+	src/voter_sim.py
+	src/fetch_location_data.py
+	settings.py
+	voting_resource_optimization.py
