@@ -19,7 +19,6 @@ from multiprocessing import Process
 import settings
 from src.util import set_logging_level
 from src.voter_sim import voter_sim
-from src.data_set import DataSet
 from src.fetch_location_data import fetch_location_data
 
 parser = argparse.ArgumentParser()
@@ -43,10 +42,9 @@ parser.add_argument(
 MAX_MACHINES = 60
 
 # General variables
-# first and last voting locations. This allows results to be calculated for a subset of location
-FIRST_LOC = 1
-LAST_LOC = 41
-NUM_LOCATIONS = LAST_LOC - FIRST_LOC + 1
+FIRST_LOCATION = 1
+LAST_LOCATION = 5
+NUM_LOCATIONS = LAST_LOCATION - FIRST_LOCATION + 1
 
 ALPHA_VALUE = 0.05  # Probability of rejecting the null hypotheses
 DELTA_IZ = 0.5  # Indifference zone parameter
@@ -211,39 +209,34 @@ def create_hypotheses_df(num_h):
 
 # NOTE: this appears to be the main izgbs function
 def izgbs(
-    vote_loc,
+    voting_location_num,
     total_num,
     start,
     min_val,
     alpha,
-    location_data: DataSet
+    location_data: dict
 ):
     '''
-        Main IZGBS function. TODO: fill out function desc
+        Main IZGBS function.
 
         Params:
-            vote_loc () : TODO,
+            voting_location_num (int) : voting location number,
             total_num () : TODO,
             start () : TODO,
             min_val () : TODO,
             alpha () : TODO,
-            location_data (DataSet) : location tab of input xlsx.
+            location_data (dict) : location tab of input xlsx.
 
         Returns:
             () : TODO.
     '''
     # read in parameters from locations dataframe
-    # voters_max = location_data['Eligible Voters'].loc[vote_loc]
-    # ballot_lth = location_data['Ballot Length Measure'].loc[vote_loc]
-    # arrival_rt = location_data['Arrival_mean'].loc[vote_loc]
-    for row in location_data:
-        if row[0] == vote_loc:
-            voters_max = row[2]
-            ballot_lth = row[3]
-            arrival_rt = row[5]
+    voters_max = location_data[voting_location_num]['Eligible Voters']
+    ballot_length = location_data[voting_location_num]['Ballot Length Measure']
+    arrival_rt = location_data[voting_location_num]['Arrival Mean']
 
     # calculate voting times
-    vote_min, vote_mode, vote_max, vote_avg = voting_time_calcs(ballot_lth)
+    vote_min, vote_mode, vote_max, vote_avg = voting_time_calcs(ballot_length)
 
     # create a dataframe for total number of machines
     feasible_df = create_hypotheses_df(total_num)
@@ -335,9 +328,7 @@ def evaluate_location(param: list) -> dict:
         Runs IZGBS on a specified location, return results in dict best_results.
 
         Params:
-            param: a list contains two elements that required for this function- location_data, i
-            location_data (DataSet) : location table of input xlsx,
-            i (int) : location index.
+            param (list) : location data dict and location idx.
 
         Returns:
             best_result: a dict contain all field that going to fill in result_df.
