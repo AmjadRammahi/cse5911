@@ -31,9 +31,6 @@ parser.add_argument(
     help='log level, ex: --log debug'
 )
 
-# ===============================================================================
-# Utility Functions
-
 
 def create_loc_df(vote_locs):
     '''
@@ -53,10 +50,6 @@ def create_loc_df(vote_locs):
     loc_results['Locations'] = (loc_results.index + 1).astype('str')
 
     return loc_results
-
-
-# ===============================================================================
-# Main IZGBS Function
 
 
 def populate_result_df(results: list, result_df: DataFrame) -> None:
