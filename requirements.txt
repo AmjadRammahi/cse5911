@@ -7,3 +7,5 @@ scipy
 gspread
 tqdm
 autopep8
+snakeviz
+coverage
