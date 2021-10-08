@@ -3,18 +3,8 @@ import logging
 import numpy as np
 from random import expovariate
 
-#import settings
+from src.settings import Settings
 
-# deluxe version variable placeholders
-# 5:30, 6:30, 7:30
-global POLL_START
-POLL_START = 6.5
-global POLL_END
-POLL_END = 19.5
-
-# Add voter average arrivals in minutes
-global POLL_OPEN
-POLL_OPEN = POLL_END - POLL_START
 
 class VotingLocation(object):
     def __init__(
@@ -163,8 +153,7 @@ def voter_sim(
     # RANDOM_SEED = 56  # for repeatability during testing
     # rand.seed(RANDOM_SEED)
 
-    #SIM_TIME = (settings.POLL_END - settings.POLL_START) * 60  # simulation time in minutes
-    SIM_TIME = (POLL_END - POLL_START) * 60
+    SIM_TIME = (Settings.POLL_END - Settings.POLL_START) * 60
 
     # create an environment and start the setup process
     env = simpy.Environment()

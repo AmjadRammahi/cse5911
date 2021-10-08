@@ -1,5 +1,6 @@
 from pandas.core.frame import DataFrame
 
+import sys
 import xlrd
 import math
 import time
@@ -8,15 +9,13 @@ import argparse
 import numpy as np
 import pandas as pd
 import scipy.stats as st
-import multiprocessing
-import sys
+
 from tqdm import tqdm
-from typing import List, Union
 from statistics import mean
 from multiprocessing import Pool
-from multiprocessing import Process
+from typing import List, Union, Optional
 
-import settings
+from src.settings import Settings
 from src.util import set_logging_level
 from src.voter_sim import voter_sim
 from src.fetch_location_data import fetch_location_data
@@ -35,131 +34,53 @@ parser.add_argument(
 )
 
 # ===============================================================================
-# Globals
-
-# TODO: need to move a lot of these globals into settings.py so they are easier to unit test - Collin
-
-MAX_MACHINES = 60
-
-# General variables
-FIRST_LOCATION = 1
-LAST_LOCATION = 5
-NUM_LOCATIONS = LAST_LOCATION - FIRST_LOCATION + 1
-
-ALPHA_VALUE = 0.05  # Probability of rejecting the null hypotheses
-DELTA_IZ = 0.5  # Indifference zone parameter
-NUM_REPLICATIONS = 100
-
-# waiting time of voter who waits the longest
-SERVICE_REQ = 30
-
-# Batch size
-BATCH_SIZE = 20
-
-# Specifies whether there is a minimum allocation requirement, and if so what it is
-# Check that this is being used correctly
-MIN_ALLOC_FLG = 1
-MIN_ALLOC = 4
-# min_alloc = 175
-
-# Voting times
-MIN_VOTING_MIN = 6
-MIN_VOTING_MODE = 8
-MIN_VOTING_MAX = 12
-MIN_BALLOT = 0
-MAX_VOTING_MIN = 6
-MAX_VOTING_MODE = 10
-MAX_VOTING_MAX = 20
-MAX_BALLOT = 10
-
-NUM_MACHINES = 50  # NOTE: this was a local var, promoted it to global - Collin
-
-# Not yet used
-# check_in_times = [0.9, 1.1, 2.9]
-
-# Calculate number of batches
-NUM_BATCHES = NUM_REPLICATIONS // BATCH_SIZE
-
-# machine_df contains estimated voters, max voters, and ballot length
-
-# TODO: this num_tests is heavily used and it looks like Tian had a TODO here for it - Collin
-# placeholder for algorithm to determine next configuration to test. This should be moved to location loop.
-num_test = 2
-
-# ===============================================================================
 # Utility Functions
 
 
-def calc_wait_times(results_dict: dict) -> tuple:
-    '''
-        Calculates the mean and max wait time for the voters of a simulation.
-
-        Params:
-            results_dict (dict) : voting simulation results.
-
-        Returns:
-            (tuple) : mean and max.
-    '''
-    wait_times = [
-        info['Voting_Start_Time'] - info['Arrival_Time']
-        for info in results_dict.values()
-    ]
-
-    return mean(wait_times), max(wait_times)
-
-
-def voting_time_calcs(ballot):
+def voting_time_calcs(ballot_length: int):
     '''
         Calculates the min/mode/max/avg for a given ballot.
 
         Params:
-            ballot () : TODO.
+            ballot_length (int) : ballot length for the location.
 
         Returns:
-            (float) : vote_min,
-            (float) : vote_mode,
-            (float) : vote_max,
-            (float) : vote_avg.
+            (float) : vote time min,
+            (float) : vote time mode,
+            (float) : vote time max,
+            (float) : vote time avg.
     '''
+    min_voting_min = Settings.MIN_VOTING_MIN
+    min_voting_mode = Settings.MIN_VOTING_MODE
+    min_voting_max = Settings.MIN_VOTING_MAX
+    min_ballot = Settings.MIN_BALLOT
+
+    max_voting_min = Settings.MAX_VOTING_MIN
+    max_voting_mode = Settings.MAX_VOTING_MODE
+    max_voting_max = Settings.MAX_VOTING_MAX
+    max_ballot = Settings.MAX_BALLOT
+
     vote_min = \
-        MIN_VOTING_MIN + \
-        (MAX_VOTING_MIN - MIN_VOTING_MIN) / \
-        (MAX_BALLOT - MIN_BALLOT) * \
-        (ballot - MIN_BALLOT)
+        min_voting_min + \
+        (max_voting_min - min_voting_min) / \
+        (max_ballot - min_ballot) * \
+        (ballot_length - min_ballot)
 
     vote_mode = \
-        MIN_VOTING_MODE + \
-        (MAX_VOTING_MODE - MIN_VOTING_MODE) / \
-        (MAX_BALLOT - MIN_BALLOT) * \
-        (ballot - MIN_BALLOT)
+        min_voting_mode + \
+        (max_voting_mode - min_voting_mode) / \
+        (max_ballot - min_ballot) * \
+        (ballot_length - min_ballot)
 
     vote_max = \
-        MIN_VOTING_MAX + \
-        (MAX_VOTING_MAX - MIN_VOTING_MAX) / \
-        (MAX_BALLOT - MIN_BALLOT) * \
-        (ballot - MIN_BALLOT)
+        min_voting_max + \
+        (max_voting_max - min_voting_max) / \
+        (max_ballot - min_ballot) * \
+        (ballot_length - min_ballot)
 
     vote_avg = (vote_min + vote_mode + vote_max) / 3
 
     return vote_min, vote_mode, vote_max, vote_avg
-
-
-def create_results_dict(max_voters: int) -> dict:
-    '''
-        Creates a dict to store simulation results.
-
-        Params:
-            max_voters (int) : maximum number of possible voters.
-
-        Returns:
-            (dict) : pre-initialized (to None values) results dict.
-    '''
-    return {
-        f'Voter {i}': {
-            'Used': False
-        }
-        for i in range(max_voters)
-    }
 
 
 def create_loc_df(vote_locs):
@@ -231,7 +152,7 @@ def izgbs(
             () : TODO.
     '''
     # read in parameters from locations dataframe
-    voters_max = location_data[voting_location_num]['Eligible Voters']
+    max_voters = location_data[voting_location_num]['Eligible Voters']
     ballot_length = location_data[voting_location_num]['Ballot Length Measure']
     arrival_rt = location_data[voting_location_num]['Arrival Mean']
 
@@ -248,20 +169,27 @@ def izgbs(
     cur_lower = min_val
 
     while hypotheses_remain:
-        logging.info(f'Num Test: {num_test}')
-        logging.info(f'Current Upper: {cur_upper}')
-        logging.info(f'Current Lower: {cur_lower}')
+        logging.info(f'Current upper bound: {cur_upper}')
+        logging.info(f'Current lower bound: {cur_lower}')
+        logging.info(f'\tTesting with: {num_test}')
 
         mean_wait_times = []
         max_wait_times = []
 
-        for _ in range(NUM_REPLICATIONS):
-            results_dict = create_results_dict(voters_max)
+        # =====================================
+
+        for _ in range(Settings.NUM_REPLICATIONS):
+            results_dict = {
+                f'Voter {i}': {
+                    'Used': False
+                }
+                for i in range(max_voters)
+            }
 
             # calculate voting times
             voter_sim(
                 results_dict,
-                voters_max,
+                max_voters,
                 vote_min,
                 vote_mode,
                 vote_max,
@@ -275,9 +203,14 @@ def izgbs(
                 if info['Used']
             }
 
-            mean_wt, max_wt = calc_wait_times(results_dict)
-            mean_wait_times.append(mean_wt)
-            max_wait_times.append(max_wt)
+            wait_times = [
+                info['Voting_Start_Time'] - info['Arrival_Time']
+                for info in results_dict.values()
+            ]
+            mean_wait_times.append(mean(wait_times))
+            max_wait_times.append(max(wait_times))
+
+        # =====================================
 
         avg_wait_time_avg = mean(mean_wait_times)
         max_wait_time_avg = mean(max_wait_times)
@@ -289,30 +222,25 @@ def izgbs(
 
         # calculate test statistic
         if max_wait_time_std > 0:
-            z = (max_wait_time_avg - (SERVICE_REQ + DELTA_IZ)) / \
-                (max_wait_time_std / math.sqrt(NUM_BATCHES))
+            z = (max_wait_time_avg - Settings.SERVICE_REQ + Settings.DELTA_INDIFFERENCE_ZONE) / \
+                (max_wait_time_std / math.sqrt(Settings.NUM_BATCHES))
             p = st.norm.cdf(z)
 
             # feasible
-            if p < alpha:  # TODO/NOTE: alpha was initially SASalphaValue(sas_alpha_value) which was undefined, be careful here - Collin
+            if p < alpha:
+                # move to lower half
                 feasible_df.loc[feasible_df.Machines >= num_test, 'Feasible'] = 1
-                logging.debug('scenario 1')
-                # Move to lower half
                 cur_upper = num_test
                 num_test = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
-                logging.debug('scenario2')
-                # Move to upper half
+                # move to upper half
                 feasible_df.loc[feasible_df.Machines == num_test, 'Feasible'] = 0
                 cur_lower = num_test
                 num_test = math.floor((cur_upper - num_test) / 2) + cur_lower
-            # Declare feasible if Std = 0??
         else:
-            logging.debug('scenario3')
+            # move to lower half
             feasible_df.loc[feasible_df.Machines >= num_test, 'Feasible'] = 1
-            # Move to lower half
             cur_upper = num_test
-            t = math.floor((cur_upper - cur_lower) / 2)
             num_test = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 
         # check if there are hypotheses left to test
@@ -323,42 +251,43 @@ def izgbs(
     return feasible_df
 
 
-def evaluate_location(param: list) -> dict:
+def evaluate_location(params: list) -> None:
     '''
         Runs IZGBS on a specified location, return results in dict best_results.
 
         Params:
-            param (list) : location data dict and location idx.
+            params (list) : location data dict, location id.
 
         Returns:
             best_result: a dict contain all field that going to fill in result_df.
     '''
     best_result = {}
-    location_data = param[0]
-    i = param[1]
+    location_data, location_id = params
 
-    print(f'Starting Location: {i}')
+    logging.info(f'Starting Location: {location_id}')
 
     # Placeholder, use a different start value for later machines?
-    if MIN_ALLOC_FLG:
-        start_val = math.ceil((MAX_MACHINES - MIN_ALLOC) / 2) + MIN_ALLOC
-        sas_alpha_value = ALPHA_VALUE / math.log2(MAX_MACHINES - MIN_ALLOC)
+    # NOTE/TODO: apportionment vs appointment - Collin
+    if Settings.MIN_ALLOC_FLG:
+        start_val = math.ceil(
+            (Settings.MAX_MACHINES - Settings.MIN_ALLOC) / 2) + Settings.MIN_ALLOC
+        sas_alpha_value = Settings.ALPHA_VALUE / math.log2(Settings.MAX_MACHINES - Settings.MIN_ALLOC)
 
         loc_res = izgbs(
-            i,
-            MAX_MACHINES,
+            location_id,
+            Settings.MAX_MACHINES,
             start_val,
-            MIN_ALLOC,
+            Settings.MIN_ALLOC,
             sas_alpha_value,
             location_data
         )
     else:
-        start_val = math.ceil((MAX_MACHINES - 1) / 2)
-        sas_alpha_value = ALPHA_VALUE / math.log2(MAX_MACHINES - MIN_ALLOC)
+        start_val = math.ceil((Settings.MAX_MACHINES - 1) / 2)
+        sas_alpha_value = Settings.ALPHA_VALUE / math.log2(Settings.MAX_MACHINES - Settings.MIN_ALLOC)
 
         loc_res = izgbs(
-            i,
-            NUM_MACHINES,
+            location_id,
+            Settings.NUM_MACHINES,
             start_val,
             2,
             sas_alpha_value,
@@ -375,7 +304,7 @@ def evaluate_location(param: list) -> dict:
         loc_feas_min = loc_feas[loc_feas['Machines'] == mach_min].copy()
 
         # populate overall results with info for this location
-        best_result['i'] = i
+        best_result['i'] = location_id
         best_result['Resource'] = mach_min
         best_result['Exp. Avg. Wait Time'] = loc_feas_min.iloc[0]['BatchAvg']
         best_result['Exp. Max. Wait Time'] = loc_feas_min.iloc[0]['BatchAvgMax']
@@ -419,15 +348,13 @@ if __name__ == '__main__':
     # =========================================================================
     # Setup
 
-    settings.init()
-
     logging.info(f'reading {args.input_xlsx}')
     voting_config = xlrd.open_workbook(args.input_xlsx)
 
     # get voting location data from input xlsx file
     location_data = fetch_location_data(voting_config)
 
-    loc_df_results = create_loc_df(NUM_LOCATIONS + 1)
+    loc_df_results = create_loc_df(Settings.NUM_LOCATIONS + 1)
 
     # =========================================================================
     # Main
@@ -436,11 +363,18 @@ if __name__ == '__main__':
 
     location_params = [
         [location_data, i]
-        for i in range(1, NUM_LOCATIONS)
+        for i in range(1, Settings.NUM_LOCATIONS)
     ]
 
-    with Pool() as p:
-        results = p.map(evaluate_location, location_params)
+    pool = Pool()
+
+    results = [
+        result
+        for result in tqdm(
+            pool.imap(evaluate_location, location_params),
+            total=len(location_params)
+        )
+    ]
 
     populate_result_df(results, loc_df_results)
 
