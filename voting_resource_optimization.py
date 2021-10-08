@@ -1,4 +1,4 @@
-from __future__ import annotations
+from pandas.core.frame import DataFrame
 
 import xlrd
 import math
@@ -8,9 +8,13 @@ import argparse
 import numpy as np
 import pandas as pd
 import scipy.stats as st
+import multiprocessing
+import sys
 from tqdm import tqdm
-from typing import Union
+from typing import List, Union
 from statistics import mean
+from multiprocessing import Pool
+from multiprocessing import Process
 
 import settings
 from src.util import set_logging_level
@@ -30,7 +34,6 @@ parser.add_argument(
     help='log level, ex: --log debug'
 )
 
-
 # ===============================================================================
 # Globals
 
@@ -39,10 +42,9 @@ parser.add_argument(
 MAX_MACHINES = 60
 
 # General variables
-# first and last voting locations. This allows results to be calculated for a subset of location
-FIRST_LOC = 1
-LAST_LOC = 5
-NUM_LOCATIONS = LAST_LOC - FIRST_LOC + 1
+FIRST_LOCATION = 1
+LAST_LOCATION = 5
+NUM_LOCATIONS = LAST_LOCATION - FIRST_LOCATION + 1
 
 ALPHA_VALUE = 0.05  # Probability of rejecting the null hypotheses
 DELTA_IZ = 0.5  # Indifference zone parameter
@@ -215,7 +217,7 @@ def izgbs(
     location_data: dict
 ):
     '''
-        Main IZGBS function. TODO: fill out function desc
+        Main IZGBS function.
 
         Params:
             voting_location_num (int) : voting location number,
@@ -321,23 +323,21 @@ def izgbs(
     return feasible_df
 
 
-def evaluate_location(
-    loc_df_results,
-    location_data: dict,
-    i: int
-) -> None:
+def evaluate_location(param: list) -> dict:
     '''
-        Runs IZGBS on a specified location, stores results in loc_df_results.
+        Runs IZGBS on a specified location, return results in dict best_results.
 
         Params:
-            loc_df_results () : TODO,
-            location_data (dict) : location table of input xlsx,
-            i (int) : location index.
+            param (list) : location data dict and location idx.
 
         Returns:
-            None.
+            best_result: a dict contain all field that going to fill in result_df.
     '''
-    logging.info(f'Starting Location: {i}')
+    best_result = {}
+    location_data = param[0]
+    i = param[1]
+
+    print(f'Starting Location: {i}')
 
     # Placeholder, use a different start value for later machines?
     if MIN_ALLOC_FLG:
@@ -375,22 +375,40 @@ def evaluate_location(
         loc_feas_min = loc_feas[loc_feas['Machines'] == mach_min].copy()
 
         # populate overall results with info for this location
-        loc_df_results.loc[
-            loc_df_results.Locations == str(i),
+        best_result['i'] = i
+        best_result['Resource'] = mach_min
+        best_result['Exp. Avg. Wait Time'] = loc_feas_min.iloc[0]['BatchAvg']
+        best_result['Exp. Max. Wait Time'] = loc_feas_min.iloc[0]['BatchAvgMax']
+
+        return best_result
+
+
+def populate_result_df(results: list, result_df: DataFrame) -> None:
+    '''
+        Store IZGBS run results in loc_df_results.
+
+        Params:
+            results (list) : lists of result from izgbs,
+            result_df (DataFrame) : an empty dataframe intended to host results.
+
+        Returns:
+            None.
+    '''
+    for result in results:
+        result_df.loc[
+            result_df.Locations == str(result['i']),
             'Resource'
-        ] = mach_min
+        ] = result['Resource']
 
-        loc_df_results.loc[
-            loc_df_results.Locations == str(i),
+        result_df.loc[
+            result_df.Locations == str(result['i']),
             'Exp. Avg. Wait Time'
-        ] = loc_feas_min.iloc[0]['BatchAvg']
+        ] = result['Exp. Avg. Wait Time']
 
-        loc_df_results.loc[
-            loc_df_results.Locations == str(i),
+        result_df.loc[
+            result_df.Locations == str(result['i']),
             'Exp. Max. Wait Time'
-        ] = loc_feas_min.iloc[0]['BatchAvgMax']
-
-        logging.info(loc_df_results)
+        ] = result['Exp. Max. Wait Time']
 
 
 if __name__ == '__main__':
@@ -416,8 +434,17 @@ if __name__ == '__main__':
 
     start_time = time.perf_counter()
 
-    for i in range(1, NUM_LOCATIONS):
-        evaluate_location(loc_df_results, location_data, i)
+    location_params = [
+        [location_data, i]
+        for i in range(1, NUM_LOCATIONS)
+    ]
+
+    with Pool() as p:
+        results = p.map(evaluate_location, location_params)
+
+    populate_result_df(results, loc_df_results)
+
+    print(loc_df_results)
 
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')
