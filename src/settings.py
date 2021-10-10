@@ -4,8 +4,8 @@
 # Do not create an instance of this class. Instead, if you need to modify
 # a setting, then directly edit the class variable, ex: Settings.MIN_ALLOC_FLG = False
 class Settings:
-    POLL_START = 6.5
-    POLL_END = 19.5
+    POLL_START = 6.5  # 6:30 am
+    POLL_END = 19.5  # 7:30 pm
     POLL_OPEN = POLL_END - POLL_START
 
     BATCH_SIZE = 20
