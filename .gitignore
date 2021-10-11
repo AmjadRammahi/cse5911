@@ -12,3 +12,5 @@ venv*/
 
 # PyCharm .idea directory
 .idea/
+
+.coverage
