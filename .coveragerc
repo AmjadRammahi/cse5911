@@ -1,0 +1,6 @@
+[run]
+include =
+	src/voter_sim.py
+	src/fetch_location_data.py
+	settings.py
+	voting_resource_optimization.py
