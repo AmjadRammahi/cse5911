@@ -8,3 +8,5 @@ gspread
 tqdm
 autopep8
 pytest-cov
+snakeviz
+coverage

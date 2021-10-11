@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from random import expovariate
 
-import settings
+from src.settings import Settings
 
 
 class VotingLocation(object):
@@ -153,7 +153,7 @@ def voter_sim(
     # RANDOM_SEED = 56  # for repeatability during testing
     # rand.seed(RANDOM_SEED)
 
-    SIM_TIME = (settings.POLL_END - settings.POLL_START) * 60  # simulation time in minutes
+    SIM_TIME = (Settings.POLL_END - Settings.POLL_START) * 60
 
     # create an environment and start the setup process
     env = simpy.Environment()

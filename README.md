@@ -6,6 +6,7 @@
 * Collin Wright
 * Luke Howard
 * Tian Liang - Original Contributer
+* Jennifer Heider - Original Contributer
 
 ## Project Overview
 
@@ -24,7 +25,7 @@ pip install -r requirements.txt
 
 # Usage
 ```
-python3 voting_resource_optimization.py voting_excel.xlsx
+python3 apportionment.py voting_excel.xlsx
 ```
 
 ## TODOs
@@ -33,3 +34,6 @@ python3 voting_resource_optimization.py voting_excel.xlsx
 
 ## Notes
 * Initial runtime of the code was 1622.43 seconds (benchmarked on OSC).
+
+* Apportionment - Infinite resources per locations - goal: min resources that meet specified wait time req.
+* Allocation - Fixed number of resources, fixed number of locations - goal: best distribute resources to minimize total wait times.
