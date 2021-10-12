@@ -10,3 +10,4 @@ autopep8
 snakeviz
 coverage
 pytest-cov
+pytest-mock
