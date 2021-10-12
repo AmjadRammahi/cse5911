@@ -145,7 +145,7 @@ def voter_sim(
             vote_time_mode (float) : mode voting time,
             vote_time_max (float) : max voting time,
             arrival_rt (float) : arrival mean,
-            num_machines (int) : nuber of voting machines at the location.
+            num_machines (int) : number of voting machines at the location.
 
         Returns:
             None.
