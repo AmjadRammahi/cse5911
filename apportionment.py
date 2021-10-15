@@ -1,3 +1,4 @@
+from posixpath import join
 from pandas.core.frame import DataFrame
 
 import sys
@@ -8,8 +9,9 @@ import logging
 import argparse
 import numpy as np
 import pandas as pd
-
+from numba import njit
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 from typing import List, Union, Optional
 
@@ -45,10 +47,10 @@ def create_loc_df(vote_locs):
     res_cols = ['Resource', 'Exp. Avg. Wait Time', 'Exp. Max. Wait Time']
     # Create an empty dataframe the same size as the locations dataframe
     voter_cols = np.zeros((vote_locs, len(res_cols)))
+    
     loc_results = pd.DataFrame(voter_cols, columns=res_cols)
     # Populates the location ID field
     loc_results['Locations'] = (loc_results.index + 1).astype('str')
-
     return loc_results
 
 
@@ -105,17 +107,37 @@ if __name__ == '__main__':
         [location_data, i]
         for i in range(1, Settings.NUM_LOCATIONS)
     ]
+    
 
+    '''
+    # attempt to use various multiprocess techniques for speed testing
+
+    # attemp 1
     pool = Pool()
+    results = pool.map(evaluate_location, location_params);
+    pool.close()
+    pool.join()
+    resutls = [entry for result in results for entry in result]
 
+    # attempt 2
+    with ThreadPoolExecutor(12) as ex:
+        results =[
+            result 
+            for result in tqdm(
+                ex.map(evaluate_location, location_params),
+                total=len(location_params)
+            )
+        ]
+    '''
+    pool = Pool()
     results = [
-        result
+        result 
         for result in tqdm(
             pool.imap(evaluate_location, location_params),
             total=len(location_params)
         )
     ]
-
+    
     populate_result_df(results, loc_df_results)
 
     print(loc_df_results)

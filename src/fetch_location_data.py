@@ -17,8 +17,8 @@ def fetch_location_data(voting_config: Book) -> dict:
             (dict) : location sheet as a dict.
     '''
     location_sheet = voting_config.sheet_by_name(u'locations')
-
     location_data = {}
+    
 
     for i in range(location_sheet.nrows):
         if i == 0:
@@ -29,5 +29,5 @@ def fetch_location_data(voting_config: Book) -> dict:
         location_data[i].update({
             'Arrival Mean': location_data[i]['Likely or Exp. Voters'] / Settings.POLL_OPEN / 60
         })
-
+    
     return location_data
