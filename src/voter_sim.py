@@ -172,8 +172,3 @@ def voter_sim(
 
     # environment will run until end of simulation time
     env.run(until=SIM_TIME)
-<<<<<<< HEAD
-    
-    return res_df
-=======
->>>>>>> main
