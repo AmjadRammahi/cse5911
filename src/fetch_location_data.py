@@ -20,7 +20,7 @@ def fetch_location_data(voting_config: Book) -> dict:
 
     location_data = {}
 
-    for i in range(location_sheet.nrows):
+    for i in range(Settings.NUM_LOCATIONS + 1):
         if i == 0:
             continue
 

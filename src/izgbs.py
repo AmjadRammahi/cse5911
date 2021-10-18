@@ -79,11 +79,10 @@ def create_hypotheses_df(num_h):
 
 
 def izgbs(
-    voting_location_num: int,
     max_machines: int,
     start_machines: int,
     min_machines: int,
-    alpha,
+    sas_alpha_value: float,
     location_data: dict
 ):
     '''
@@ -94,16 +93,16 @@ def izgbs(
             max_machines (int) : maximum allowed number of machines,
             start_machines (int) : starting number of machines to test,
             min_machines (int) : minimum allowed number of machines,
-            alpha (float) : TODO,
-            location_data (dict) : location tab of input xlsx.
+            sas_alpha_value (float) : TODO,
+            location_data (list) : location data.
 
         Returns:
             (pd.DataFrame) : feasability of each resource amt.
     '''
     # read in parameters from locations dataframe
-    max_voters = location_data[voting_location_num]['Eligible Voters']
-    ballot_length = location_data[voting_location_num]['Ballot Length Measure']
-    arrival_rt = location_data[voting_location_num]['Arrival Mean']
+    max_voters = location_data['Eligible Voters']
+    ballot_length = location_data['Ballot Length Measure']
+    arrival_rt = location_data['Arrival Mean']
 
     # calculate voting times
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
@@ -161,7 +160,7 @@ def izgbs(
             p = st.norm.cdf(z)
 
             # feasible
-            if p < alpha:
+            if p < sas_alpha_value:
                 # move to lower half
                 feasible_df.loc[feasible_df.Machines >= num_machines, 'Feasible'] = 1
                 cur_upper = num_machines
