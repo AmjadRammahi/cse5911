@@ -9,7 +9,7 @@ from src.settings import Settings
 from src.voter_sim import voter_sim
 
 
-def voting_time_calcs(ballot_length: int):
+def voting_time_calcs(ballot_length: int) -> tuple:
     '''
         Calculates the min/mode/max/avg for a given ballot.
 
@@ -19,8 +19,7 @@ def voting_time_calcs(ballot_length: int):
         Returns:
             (float) : vote time min,
             (float) : vote time mode,
-            (float) : vote time max,
-            (float) : vote time avg.
+            (float) : vote time max.
     '''
     min_voting_min = Settings.MIN_VOTING_MIN
     min_voting_mode = Settings.MIN_VOTING_MODE
@@ -31,6 +30,11 @@ def voting_time_calcs(ballot_length: int):
     max_voting_mode = Settings.MAX_VOTING_MODE
     max_voting_max = Settings.MAX_VOTING_MAX
     max_ballot = Settings.MAX_BALLOT
+
+    # VotingProcessingMin = MinVotingProcessingMin + (MaxVotingProcessingMin - MinVotingProcessingMin) / (MaxBallot - MinBallot) * (Ballot - MinBallot)
+    # VotingProcessingMode = MinVotingProcessingMode + (MaxVotingProcessingMode - MinVotingProcessingMode) / (MaxBallot - MinBallot) * (Ballot - MinBallot)
+    # VotingProcessingMax = MinVotingProcessingMax + (MaxVotingProcessingMax - MinVotingProcessingMax) / (MaxBallot - MinBallot) * (Ballot - MinBallot)
+    # AverageVotingProcessing = (VotingProcessingMin + VotingProcessingMode + VotingProcessingMax) / 3
 
     vote_min = \
         min_voting_min + \
@@ -50,9 +54,7 @@ def voting_time_calcs(ballot_length: int):
         (max_ballot - min_ballot) * \
         (ballot_length - min_ballot)
 
-    vote_avg = (vote_min + vote_mode + vote_max) / 3
-
-    return vote_min, vote_mode, vote_max, vote_avg
+    return vote_min, vote_mode, vote_max
 
 
 def create_hypotheses_df(num_h):
@@ -66,7 +68,7 @@ def create_hypotheses_df(num_h):
             TODO
     '''
     # This dataframe will contain 1 record per machine count
-    res_cols = ['Machines', 'Feasible', 'BatchAvg', 'BatchAvgMax']
+    res_cols = ['Machines', 'Feasible', 'Avg', 'MaxAvg']
     # Create an empty dataframe the same size as the locations dataframe
     voter_cols = np.zeros((num_h, len(res_cols)))
     hyp_results = pd.DataFrame(voter_cols, columns=res_cols)
@@ -77,11 +79,10 @@ def create_hypotheses_df(num_h):
 
 
 def izgbs(
-    voting_location_num,
-    total_num,
-    start,
-    min_val,
-    alpha,
+    max_machines: int,
+    start_machines: int,
+    min_machines: int,
+    sas_alpha_value: float,
     location_data: dict
 ):
     '''
@@ -89,109 +90,94 @@ def izgbs(
 
         Params:
             voting_location_num (int) : voting location number,
-            total_num () : TODO,
-            start () : TODO,
-            min_val () : TODO,
-            alpha () : TODO,
-            location_data (dict) : location tab of input xlsx.
+            max_machines (int) : maximum allowed number of machines,
+            start_machines (int) : starting number of machines to test,
+            min_machines (int) : minimum allowed number of machines,
+            sas_alpha_value (float) : TODO,
+            location_data (list) : location data.
 
         Returns:
-            () : TODO.
+            (pd.DataFrame) : feasability of each resource amt.
     '''
     # read in parameters from locations dataframe
-    max_voters = location_data[voting_location_num]['Eligible Voters']
-    ballot_length = location_data[voting_location_num]['Ballot Length Measure']
-    arrival_rt = location_data[voting_location_num]['Arrival Mean']
+    max_voters = location_data['Eligible Voters']
+    ballot_length = location_data['Ballot Length Measure']
+    arrival_rt = location_data['Arrival Mean']
 
     # calculate voting times
-    vote_min, vote_mode, vote_max, vote_avg = voting_time_calcs(ballot_length)
+    vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
 
     # create a dataframe for total number of machines
-    feasible_df = create_hypotheses_df(total_num)
+    feasible_df = create_hypotheses_df(max_machines)
 
     # start with the start value specified
     hypotheses_remain = True
-    num_test = start
-    cur_upper = total_num
-    cur_lower = min_val
+    num_machines = start_machines
+    cur_upper = max_machines
+    cur_lower = min_machines
 
     while hypotheses_remain:
         logging.info(f'Current upper bound: {cur_upper}')
         logging.info(f'Current lower bound: {cur_lower}')
-        logging.info(f'\tTesting with: {num_test}')
+        logging.info(f'\tTesting with: {num_machines}')
 
-        mean_wait_times = []
+        avg_wait_times = []
         max_wait_times = []
 
         # =====================================
 
-        for _ in range(Settings.NUM_REPLICATIONS):
-            results_dict = {
-                f'Voter {i}': {
-                    'Used': False
-                }
-                for i in range(max_voters)
-            }
+        # TODO: put batch stuff back
 
+        # TODO: use AKPI
+
+        for _ in range(Settings.NUM_REPLICATIONS):
             # calculate voting times
-            voter_sim(
-                results_dict,
-                max_voters,
-                vote_min,
-                vote_mode,
-                vote_max,
-                arrival_rt,
-                num_test
+            wait_times = voter_sim(
+                max_voters=max_voters,
+                vote_time_min=vote_min,
+                vote_time_mode=vote_mode,
+                vote_time_max=vote_max,
+                arrival_rt=arrival_rt,
+                num_machines=num_machines
             )
 
-            # only keep results records that were actually used
-            results_dict = {
-                name: info for name, info in results_dict.items()
-                if info['Used']
-            }
-
-            wait_times = [
-                info['Voting_Start_Time'] - info['Arrival_Time']
-                for info in results_dict.values()
-            ]
-            mean_wait_times.append(mean(wait_times))
+            avg_wait_times.append(mean(wait_times))
             max_wait_times.append(max(wait_times))
 
         # =====================================
 
-        avg_wait_time_avg = mean(mean_wait_times)
+        avg_wait_time_avg = mean(avg_wait_times)
         max_wait_time_avg = mean(max_wait_times)
         max_wait_time_std = np.std(max_wait_times)
 
         # populate results
-        feasible_df.loc[feasible_df.Machines == num_test, 'BatchAvg'] = avg_wait_time_avg
-        feasible_df.loc[feasible_df.Machines == num_test, 'BatchAvgMax'] = max_wait_time_avg
+        feasible_df.loc[feasible_df.Machines == num_machines, 'BatchAvg'] = avg_wait_time_avg
+        feasible_df.loc[feasible_df.Machines == num_machines, 'BatchMaxAvg'] = max_wait_time_avg
 
         # calculate test statistic
-        if max_wait_time_std > 0:
-            z = (max_wait_time_avg - Settings.SERVICE_REQ + Settings.DELTA_INDIFFERENCE_ZONE) / \
-                (max_wait_time_std / math.sqrt(Settings.NUM_BATCHES))
+        if max_wait_time_std > 0:  # NOTE: avoiding divide by 0 error
+            z = (max_wait_time_avg - Settings.SERVICE_REQ + Settings.DELTA_INDIFFERENCE_ZONE) / max_wait_time_std
             p = st.norm.cdf(z)
 
             # feasible
-            if p < alpha:
+            if p < sas_alpha_value:
                 # move to lower half
-                feasible_df.loc[feasible_df.Machines >= num_test, 'Feasible'] = 1
-                cur_upper = num_test
-                num_test = math.floor((cur_upper - cur_lower) / 2) + cur_lower
+                feasible_df.loc[feasible_df.Machines >= num_machines, 'Feasible'] = 1
+                cur_upper = num_machines
+                num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
                 # move to upper half
-                feasible_df.loc[feasible_df.Machines == num_test, 'Feasible'] = 0
-                cur_lower = num_test
-                num_test = math.floor((cur_upper - num_test) / 2) + cur_lower
+                feasible_df.loc[feasible_df.Machines == num_machines, 'Feasible'] = 0
+                cur_lower = num_machines
+                num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
         else:
             # move to lower half
-            feasible_df.loc[feasible_df.Machines >= num_test, 'Feasible'] = 1
-            cur_upper = num_test
-            num_test = math.floor((cur_upper - cur_lower) / 2) + cur_lower
+            feasible_df.loc[feasible_df.Machines >= num_machines, 'Feasible'] = 1
+            cur_upper = num_machines
+            num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 
         # check if there are hypotheses left to test
-        hypotheses_remain = cur_lower < cur_upper and cur_lower < num_test < cur_upper
+        hypotheses_remain = cur_lower < cur_upper and cur_lower < num_machines < cur_upper
 
     logging.info(feasible_df)
 
