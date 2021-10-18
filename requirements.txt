@@ -9,3 +9,4 @@ tqdm
 autopep8
 snakeviz
 coverage
+jit
