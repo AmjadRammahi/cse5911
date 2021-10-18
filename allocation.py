@@ -1,62 +1,80 @@
-'''
-Sub fastApproximateKGAllocation()
+import xlrd
+import logging
+import argparse
+from pprint import pprint
 
-'Button: general Allocation
-Dim iIndex As Long, jIndex As Long, kIndex As Long
-Dim totalNumberMachinesAvailable As Long, currentTotalNumberResources As Long
-Dim numberOfIterations As Long, acceptableResourceMiss As Long
-Dim upperLimitThreshold As Double, lowerLimitThreshold As Double
-Dim currentPointResources As Long, iRow As Long
-Dim indexBottomRow As Long, indexTopRow As Long
+from apportionment import apportionment
+from src.settings import Settings
+from src.util import set_logging_level
+from src.fetch_location_data import fetch_location_data
 
-'Read in inputs
-totalNumberMachinesAvailable = SingleResource.Cells(4, 13)
-indexBottomRow = SingleResource.Cells(4, 12)
-indexTopRow = SingleResource.Cells(5, 12)
-acceptableResourceMiss = SingleResource.Cells(7, 13)
-
-'Initializations
-
-numberOfIterations = 0
-currentTotalNumberResources = 0
-'Initialize upperThreshold, lowerThreshold, currentThreshold
-upperLimitThreshold = 500
-lowerLimitThreshold = 1
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    'input_xlsx',
+    type=str,
+    help='first positional argument, input xlsx filepath'
+)
+parser.add_argument(
+    '--log',
+    type=str,
+    default='info',
+    help='log level, ex: --log debug'
+)
 
 
-'Do while number machines is not close or not too many and number iterations is ok.
-While (numberOfIterations < 20 And _
-    Abs(totalNumberMachinesAvailable - currentTotalNumberResources) > acceptableResourceMiss)
-numberOfIterations = numberOfIterations + 1
+if __name__ == '__main__':
+    args = parser.parse_args()
 
-'Update the threshold
-currentThreshold = (upperLimitThreshold + lowerLimitThreshold) * 0.5
-Home.Cells(5, 5) = currentThreshold
+    set_logging_level(args.log)
 
-'Run apportionment
-Call fastApproximateKGApportionment
+    # =========================================================================
+    # Setup
 
-'Loop over points to count resources
-currentTotalNumberResources = 0
-For iRow = indexBottomRow To indexTopRow
-currentTotalNumberResources = currentTotalNumberResources + SingleResource.Cells(iRow, 4)
-'End loop over points
-Next iRow
+    logging.info(f'reading {args.input_xlsx}')
+    voting_config = xlrd.open_workbook(args.input_xlsx)
 
-If (totalNumberMachinesAvailable > currentTotalNumberResources) Then
-'We could tighten up.
-upperLimitThreshold = currentThreshold
+    # get voting location data from input xlsx file
+    location_data = fetch_location_data(voting_config)
 
-Else
-'We need to back off.
-lowerLimitThreshold = currentThreshold
+    # =========================================================================
+    # Main
 
-End If
+    total_machines_available = 50
 
+    for location in location_data.values():
+        location['NUM_MACHINES'] = Settings.MAX_MACHINES
 
-Wend
+    apportionment_results = apportionment(location_data)
+    current_total_machines = sum(x['Resource'] for x in apportionment_results.values())
 
-SingleResource.Cells(8, 13) = currentTotalNumberResources
+    if current_total_machines > total_machines_available:
+        # subtract machines proportionally such that the new sum is the total_machines_available
+        for i, location in enumerate(location_data.values()):
+            location['NUM_MACHINES'] = int(
+                apportionment_results[i + 1]['Resource'] /
+                current_total_machines *
+                total_machines_available
+            )
 
-End Sub
-'''
+        # rerun apportionment to get new times
+        apportionment_results = apportionment(location_data)
+        current_total_machines = sum(x['Resource'] for x in apportionment_results.values())
+
+        # round robin increment resources for those with highest wait times
+        ordered = sorted(
+            [(i, location['Exp. Max. Wait Time'])
+             for i, location in apportionment_results.items()
+             ],
+            key=lambda x: x[1]
+        )
+        curr = 0
+
+        while current_total_machines < total_machines_available:
+            if curr == len(apportionment_results):
+                curr = 0
+
+            apportionment_results[ordered[curr][0]]['Resource'] += 1
+            current_total_machines += 1
+            curr += 1
+
+    pprint(apportionment_results)

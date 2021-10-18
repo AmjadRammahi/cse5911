@@ -24,8 +24,7 @@ class Settings:
 
     SERVICE_REQ = 30  # waiting time of voter who waits the longest
 
-    MAX_MACHINES = 60
-    NUM_MACHINES = 50
+    MAX_MACHINES = 100
 
     ALPHA_VALUE = 0.05  # probability of rejecting the null hypotheses
     DELTA_INDIFFERENCE_ZONE = 0.5
