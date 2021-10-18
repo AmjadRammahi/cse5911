@@ -1,4 +1,4 @@
-from voting_resource_optimization import izgbs
+from src.izgbs import izgbs
 
 
 def test_izgbs_1():

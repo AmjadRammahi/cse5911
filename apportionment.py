@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
+from pprint import pprint
 from multiprocessing import Pool
 from typing import List, Union, Optional
 
@@ -32,52 +33,33 @@ parser.add_argument(
 )
 
 
-def create_loc_df(vote_locs):
+def apportionment(location_data: dict) -> dict:
     '''
-        This function creates a dataframe of IZGBS results to be outputted.
+        Runs apportionment against the given locations.
 
         Params:
-            vote_locs () : TODO.
+            location_data (dict) :
+                contains the amt of voters and the ballot length for each location.
 
         Returns:
-            TODO
+            (dict) : locations with the min feasible
+                resource number and BatchAvg/BatchMaxAvg wait time.
     '''
-    res_cols = ['Resource', 'Exp. Avg. Wait Time', 'Exp. Max. Wait Time']
-    # Create an empty dataframe the same size as the locations dataframe
-    voter_cols = np.zeros((vote_locs, len(res_cols)))
-    loc_results = pd.DataFrame(voter_cols, columns=res_cols)
-    # Populates the location ID field
-    loc_results['Locations'] = (loc_results.index + 1).astype('str')
+    # NOTE: locations start at 1, not 0
+    location_params = [
+        location_data[i + 1]
+        for i in range(Settings.NUM_LOCATIONS)
+    ]
 
-    return loc_results
+    pool = Pool()
 
-
-def populate_result_df(results: list, result_df: DataFrame) -> None:
-    '''
-        Store IZGBS run results in loc_df_results.
-
-        Params:
-            results (list) : lists of result from izgbs,
-            result_df (DataFrame) : an empty dataframe intended to host results.
-
-        Returns:
-            None.
-    '''
-    for result in results:
-        result_df.loc[
-            result_df.Locations == str(result['i']),
-            'Resource'
-        ] = result['Resource']
-
-        result_df.loc[
-            result_df.Locations == str(result['i']),
-            'Exp. Avg. Wait Time'
-        ] = result['Exp. Avg. Wait Time']
-
-        result_df.loc[
-            result_df.Locations == str(result['i']),
-            'Exp. Max. Wait Time'
-        ] = result['Exp. Max. Wait Time']
+    return {
+        i + 1: result
+        for i, result in enumerate(tqdm(
+            pool.imap(evaluate_location, location_params),
+            total=len(location_params)
+        ))
+    }
 
 
 if __name__ == '__main__':
@@ -94,31 +76,17 @@ if __name__ == '__main__':
     # get voting location data from input xlsx file
     location_data = fetch_location_data(voting_config)
 
-    loc_df_results = create_loc_df(Settings.NUM_LOCATIONS + 1)
-
     # =========================================================================
     # Main
 
     start_time = time.perf_counter()
 
-    location_params = [
-        [location_data, i]
-        for i in range(1, Settings.NUM_LOCATIONS)
-    ]
+    for location in location_data.values():
+        location['NUM_MACHINES'] = Settings.MAX_MACHINES
 
-    pool = Pool()
+    results = apportionment(location_data)
 
-    results = [
-        result
-        for result in tqdm(
-            pool.imap(evaluate_location, location_params),
-            total=len(location_params)
-        )
-    ]
-
-    populate_result_df(results, loc_df_results)
-
-    print(loc_df_results)
+    pprint(results)
 
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')
