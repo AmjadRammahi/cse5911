@@ -1,7 +1,12 @@
 import pytest
+from math import isclose
 from statistics import mean
 
 from src.voter_sim import voter_sim
+from src.izgbs import voting_time_calcs
+
+# NOTE: can simulate N number of times to reduce variance
+# NOTE: use math.isclose()
 
 
 def test_voter_sim_many_machines_1():
@@ -11,7 +16,7 @@ def test_voter_sim_many_machines_1():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        arrival_rt=0.01,
+        arrival_rt=100 / 13 / 60,
         num_machines=100
     )
     # assert - checking that all voters get to vote if num_machines == num_voters
@@ -73,15 +78,16 @@ def test_voter_sim_zero_machines_raises():
         )
 
 
-def test_voter_sim_usual_usage_1():
-    # act
-    wait_times = voter_sim(
-        max_voters=914,
-        vote_time_min=1,
-        vote_time_mode=2,
-        vote_time_max=3,
-        arrival_rt=0.5,
-        num_machines=7
-    )
-    # assert
-    assert mean(wait_times) == 1.0
+# def test_voter_sim_usual_usage_1():
+#     _min, _mode, _max = voting_time_calcs(5)
+#     # act
+#     wait_times = voter_sim(
+#         max_voters=914,
+#         vote_time_min=_min,
+#         vote_time_mode=_mode,
+#         vote_time_max=_max,
+#         arrival_rt=914 / 13 / 60,
+#         num_machines=7
+#     )
+#     # assert
+#     assert mean(wait_times) == 1.0

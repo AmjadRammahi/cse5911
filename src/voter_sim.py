@@ -5,6 +5,8 @@ from random import expovariate
 
 from src.settings import Settings
 
+# NOTE: this is TandemQueueWQuartile
+
 
 class VotingLocation(object):
     def __init__(
@@ -15,7 +17,8 @@ class VotingLocation(object):
         vote_time_min: float,
         vote_time_mode: float,
         vote_time_max: float,
-        arrival_rt: float
+        arrival_rt: float,
+        sim_time: float
     ):
         self.env = env
         self.voters_dict = {
@@ -28,6 +31,7 @@ class VotingLocation(object):
         self.vote_time_max = vote_time_max
         self.arrival_rt = arrival_rt
         self.voting_machines = simpy.Resource(env, capacity=num_machines)
+        self.sim_time = sim_time
 
         self.wait_times = []
 
@@ -58,7 +62,7 @@ class VotingLocation(object):
             https://en.wikipedia.org/wiki/Exponential_distribution
 
             Returns:
-                (float) : voter arrival time.
+                (float) : voter iter-arrival time.
         '''
         return expovariate(1.0 / self.arrival_rt)
 
@@ -95,8 +99,6 @@ class VotingLocation(object):
             self.voters_dict[name]['Departure_Time'] = self.env.now
 
             logging.debug(f'{name} leaves the polls at {self.env.now:.2f}.')
-
-        self.voters_dict[name]['Used'] = True
 
     def vote(self, name: str) -> None:
         '''
@@ -160,7 +162,7 @@ def voter_sim(
     # RANDOM_SEED = 56  # for repeatability during testing
     # rand.seed(RANDOM_SEED)
 
-    SIM_TIME = (Settings.POLL_END - Settings.POLL_START) * 60
+    sim_time = (Settings.POLL_END - Settings.POLL_START) * 60
 
     # create an environment and start the setup process
     env = simpy.Environment()
@@ -173,10 +175,11 @@ def voter_sim(
         vote_time_min,
         vote_time_mode,
         vote_time_max,
-        arrival_rt
+        arrival_rt,
+        sim_time
     )
 
     # environment will run until end of simulation time
-    env.run(until=SIM_TIME)
+    env.run(until=sim_time)
 
     return location.wait_times

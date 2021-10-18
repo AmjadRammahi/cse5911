@@ -31,6 +31,11 @@ def voting_time_calcs(ballot_length: int) -> tuple:
     max_voting_max = Settings.MAX_VOTING_MAX
     max_ballot = Settings.MAX_BALLOT
 
+    # VotingProcessingMin = MinVotingProcessingMin + (MaxVotingProcessingMin - MinVotingProcessingMin) / (MaxBallot - MinBallot) * (Ballot - MinBallot)
+    # VotingProcessingMode = MinVotingProcessingMode + (MaxVotingProcessingMode - MinVotingProcessingMode) / (MaxBallot - MinBallot) * (Ballot - MinBallot)
+    # VotingProcessingMax = MinVotingProcessingMax + (MaxVotingProcessingMax - MinVotingProcessingMax) / (MaxBallot - MinBallot) * (Ballot - MinBallot)
+    # AverageVotingProcessing = (VotingProcessingMin + VotingProcessingMode + VotingProcessingMax) / 3
+
     vote_min = \
         min_voting_min + \
         (max_voting_min - min_voting_min) / \
@@ -122,6 +127,10 @@ def izgbs(
 
         # =====================================
 
+        # TODO: put batch stuff back
+
+        # TODO: use AKPI
+
         for _ in range(Settings.NUM_REPLICATIONS):
             # calculate voting times
             wait_times = voter_sim(
@@ -143,12 +152,12 @@ def izgbs(
         max_wait_time_std = np.std(max_wait_times)
 
         # populate results
-        feasible_df.loc[feasible_df.Machines == num_machines, 'Avg'] = avg_wait_time_avg
-        feasible_df.loc[feasible_df.Machines == num_machines, 'MaxAvg'] = max_wait_time_avg
+        feasible_df.loc[feasible_df.Machines == num_machines, 'BatchAvg'] = avg_wait_time_avg
+        feasible_df.loc[feasible_df.Machines == num_machines, 'BatchMaxAvg'] = max_wait_time_avg
 
         # calculate test statistic
-        if max_wait_time_std > 0:
-            z = max_wait_time_avg - Settings.SERVICE_REQ + Settings.DELTA_INDIFFERENCE_ZONE
+        if max_wait_time_std > 0:  # NOTE: avoiding divide by 0 error
+            z = (max_wait_time_avg - Settings.SERVICE_REQ + Settings.DELTA_INDIFFERENCE_ZONE) / max_wait_time_std
             p = st.norm.cdf(z)
 
             # feasible
