@@ -3,8 +3,6 @@ import logging
 import numpy as np
 import scipy.stats as st
 from statistics import mean
-from numba import njit, jit
-from numba.typed import Dict
 from src.settings import Settings
 from src.voter_sim import voter_sim
 import src.global_var
