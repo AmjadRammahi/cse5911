@@ -5,27 +5,35 @@ from random import expovariate
 from numba import njit
 from src.settings import Settings
 
+# NOTE: this is TandemQueueWQuartile
+
 
 class VotingLocation(object):
     def __init__(
         self,
         env: simpy.Environment,
-        results_dict: dict,
-        max_voter: int,
+        max_voters: int,
         num_machines: int,
         vote_time_min: float,
         vote_time_mode: float,
         vote_time_max: float,
-        arrival_rt: float
+        arrival_rt: float,
+        sim_time: float
     ):
         self.env = env
-        self.results_dict = results_dict
-        self.max_voter = max_voter
+        self.voters_dict = {
+            f'Voter {i}': {}
+            for i in range(max_voters)
+        }
+        self.max_voters = max_voters
         self.vote_time_min = vote_time_min
         self.vote_time_mode = vote_time_mode
         self.vote_time_max = vote_time_max
         self.arrival_rt = arrival_rt
         self.voting_machines = simpy.Resource(env, capacity=num_machines)
+        self.sim_time = sim_time
+
+        self.wait_times = []
 
         # kick off the simulation
         self.env.process(self.run())
@@ -38,7 +46,7 @@ class VotingLocation(object):
             Returns:
                 None.
         '''
-        for i in range(self.max_voter):
+        for i in range(self.max_voters):
             # generate arrival time for next voter
             t = self.generate_voter()
             yield self.env.timeout(t)
@@ -54,7 +62,7 @@ class VotingLocation(object):
             https://en.wikipedia.org/wiki/Exponential_distribution
 
             Returns:
-                (float) : voter arrival time.
+                (float) : voter iter-arrival time.
         '''
         return expovariate(1.0 / self.arrival_rt)
 
@@ -69,7 +77,7 @@ class VotingLocation(object):
             Returns:
                 None.
         '''
-        self.results_dict[name]['Arrival_Time'] = self.env.now
+        self.voters_dict[name]['Arrival_Time'] = self.env.now
 
         logging.debug(f'{name} arrives at the polls at {self.env.now:.2f}.')
 
@@ -78,17 +86,19 @@ class VotingLocation(object):
         with self.voting_machines.request() as request:
             yield request
 
-            self.results_dict[name]['Voting_Start_Time'] = self.env.now
+            self.voters_dict[name]['Voting_Start_Time'] = self.env.now
+
+            self.wait_times.append(
+                self.voters_dict[name]['Voting_Start_Time'] - self.voters_dict[name]['Arrival_Time']
+            )
 
             logging.debug(f'{name} enters the polls at {self.env.now:.2f}.')
 
             yield self.env.process(self.vote(name))
 
-            self.results_dict[name]['Departure_Time'] = self.env.now
+            self.voters_dict[name]['Departure_Time'] = self.env.now
 
             logging.debug(f'{name} leaves the polls at {self.env.now:.2f}.')
-
-        self.results_dict[name]['Used'] = True
 
     def vote(self, name: str) -> None:
         '''
@@ -106,7 +116,7 @@ class VotingLocation(object):
 
         yield self.env.timeout(voting_time)
 
-        self.results_dict[name]['Voting_Time'] = voting_time
+        self.voters_dict[name]['Voting_Time'] = voting_time
 
         logging.debug(f'{name} voted in {voting_time} minutes.')
 
@@ -127,48 +137,51 @@ class VotingLocation(object):
 
 
 def voter_sim(
-    results_dict: dict,
-    max_voter: int,
+    *,
+    max_voters: int,
     vote_time_min: float,
     vote_time_mode: float,
     vote_time_max: float,
     arrival_rt: float,
     num_machines: int
-) -> None:
+) -> list:
     '''
         Executes a voting simulation given various inputs.
 
         Params:
-            results_dict (dict) : DataFrame for sim results,
-            max_voter (int) : maximum number of voters,
+            max_voters (int) : maximum number of voters,
             vote_time_min (float) : min voting time,
             vote_time_mode (float) : mode voting time,
             vote_time_max (float) : max voting time,
             arrival_rt (float) : arrival mean,
-            num_machines (int) : nuber of voting machines at the location.
+            num_machines (int) : number of voting machines at the location.
 
         Returns:
-            None.
+            (list) : wait times.
     '''
-    # RANDOM_SEED = 56  # for repeatability during testing
-    # rand.seed(RANDOM_SEED)
 
-    SIM_TIME = (Settings.POLL_END - Settings.POLL_START) * 60
+    sim_time = Settings.POLL_OPEN * 60
 
     # create an environment and start the setup process
     env = simpy.Environment()
 
     # create the voting location
-    VotingLocation(
+    location = VotingLocation(
         env,
-        results_dict,
-        max_voter,
+        max_voters,
         num_machines,
         vote_time_min,
         vote_time_mode,
         vote_time_max,
-        arrival_rt
+        arrival_rt,
+        sim_time
     )
 
     # environment will run until end of simulation time
+<<<<<<< HEAD
     env.run(until=SIM_TIME)
+=======
+    env.run(until=sim_time)
+
+    return location.wait_times
+>>>>>>> main

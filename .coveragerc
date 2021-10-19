@@ -1,0 +1,7 @@
+[run]
+include =
+	src/voter_sim.py
+	src/fetch_location_data.py
+	src/evaluate_location.py
+	src/izgbs.py
+	apportionment.py

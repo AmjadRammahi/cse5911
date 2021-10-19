@@ -9,4 +9,10 @@ tqdm
 autopep8
 snakeviz
 coverage
+<<<<<<< HEAD
 numba
+=======
+pytest-cov
+pytest-mock
+jit
+>>>>>>> main

@@ -11,7 +11,11 @@ import numpy as np
 import pandas as pd
 from numba import njit
 from tqdm import tqdm
+<<<<<<< HEAD
 from concurrent.futures import ThreadPoolExecutor
+=======
+from pprint import pprint
+>>>>>>> main
 from multiprocessing import Pool
 from typing import List, Union, Optional
 
@@ -34,16 +38,19 @@ parser.add_argument(
 )
 
 
-def create_loc_df(vote_locs):
+def apportionment(location_data: dict) -> dict:
     '''
-        This function creates a dataframe of IZGBS results to be outputted.
+        Runs apportionment against the given locations.
 
         Params:
-            vote_locs () : TODO.
+            location_data (dict) :
+                contains the amt of voters and the ballot length for each location.
 
         Returns:
-            TODO
+            (dict) : locations with the min feasible
+                resource number and BatchAvg/BatchMaxAvg wait time.
     '''
+<<<<<<< HEAD
     res_cols = ['Resource', 'Exp. Avg. Wait Time', 'Exp. Max. Wait Time']
     # Create an empty dataframe the same size as the locations dataframe
     voter_cols = np.zeros((vote_locs, len(res_cols)))
@@ -70,16 +77,23 @@ def populate_result_df(results: list, result_df: DataFrame) -> None:
             result_df.Locations == str(result['i']),
             'Resource'
         ] = result['Resource']
+=======
+    # NOTE: locations start at 1, not 0
+    location_params = [
+        location_data[i + 1]
+        for i in range(Settings.NUM_LOCATIONS)
+    ]
+>>>>>>> main
 
-        result_df.loc[
-            result_df.Locations == str(result['i']),
-            'Exp. Avg. Wait Time'
-        ] = result['Exp. Avg. Wait Time']
+    pool = Pool()
 
-        result_df.loc[
-            result_df.Locations == str(result['i']),
-            'Exp. Max. Wait Time'
-        ] = result['Exp. Max. Wait Time']
+    return {
+        i + 1: result
+        for i, result in enumerate(tqdm(
+            pool.imap(evaluate_location, location_params),
+            total=len(location_params)
+        ))
+    }
 
 
 if __name__ == '__main__':
@@ -96,13 +110,12 @@ if __name__ == '__main__':
     # get voting location data from input xlsx file
     location_data = fetch_location_data(voting_config)
 
-    loc_df_results = create_loc_df(Settings.NUM_LOCATIONS + 1)
-
     # =========================================================================
     # Main
 
     start_time = time.perf_counter()
 
+<<<<<<< HEAD
     location_params = [
         [location_data, i]
         for i in range(1, Settings.NUM_LOCATIONS)
@@ -139,8 +152,14 @@ if __name__ == '__main__':
     ]
     
     populate_result_df(results, loc_df_results)
+=======
+    for location in location_data.values():
+        location['NUM_MACHINES'] = Settings.MAX_MACHINES
 
-    print(loc_df_results)
+    results = apportionment(location_data)
+>>>>>>> main
+
+    pprint(results)
 
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')
