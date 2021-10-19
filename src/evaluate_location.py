@@ -1,23 +1,12 @@
 import math
 import logging
-<<<<<<< HEAD
 from numba import njit
 from src.settings import Settings
 from src.izgbs import izgbs
 
 
-<<<<<<< HEAD
-def evaluate_location(params: list) -> 'best_result_dict':
-=======
-=======
-from pprint import pprint
-
-from src.settings import Settings
-from src.izgbs import izgbs
-
->>>>>>> main
 def evaluate_location(location_data: dict) -> dict:
->>>>>>> main
+
     '''
         Runs IZGBS on a specified location, return results in dict best_results.
 

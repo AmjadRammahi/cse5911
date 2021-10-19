@@ -178,10 +178,6 @@ def voter_sim(
     )
 
     # environment will run until end of simulation time
-<<<<<<< HEAD
-    env.run(until=SIM_TIME)
-=======
     env.run(until=sim_time)
 
     return location.wait_times
->>>>>>> main
