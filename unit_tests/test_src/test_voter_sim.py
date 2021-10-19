@@ -43,7 +43,6 @@ def test_generate_voter_always_true():
     assert 1 == 1
 
 
-# Check that the correct dictionary size is generated
 def test_voting_location_init_dict_length():
     num_voters = 100
     location = VotingLocation(
@@ -56,7 +55,8 @@ def test_voting_location_init_dict_length():
         arrival_rt=100 / 13 / 60,
         sim_time=Settings.POLL_OPEN
     )
-
+    # assert - checking that the correct dictionary size is generated
+    # (size == num_voters)
     assert len(location.voters_dict) == num_voters
 
 
