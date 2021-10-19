@@ -58,15 +58,18 @@ def evaluate_location(location_data: dict) -> dict:
     else:
         # no feasible setups, find lowest wait time (should work out to be max machines allowed)
         max_avg = []
+        min_index = 0
         for key, result in loc_res.items():
             max_avg.append(result['BatchMaxAvg'])
+            min_index = key
         wait_time_min = min(max_avg)
 
-        loc_res_min = {}
-        for key, result in loc_res.items():
-            if result['BatchMaxAvg'] == wait_time_min:
-                loc_res_min = result
-                break
+        loc_res_min = loc_res[min_index]
+
+        # for key, result in loc_res.items():
+        #     if result['BatchMaxAvg'] == wait_time_min:
+        #         loc_res_min = result
+        #         break
 
         best_result['Resource'] = loc_res_min['Machines']
         best_result['Exp. Avg. Wait Time'] = loc_res_min['BatchAvg']
