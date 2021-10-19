@@ -9,9 +9,6 @@ tqdm
 autopep8
 snakeviz
 coverage
-<<<<<<< HEAD
 pytest-cov
 pytest-mock
-=======
 jit
->>>>>>> main
