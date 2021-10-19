@@ -1,8 +1,5 @@
 import pytest
-from math import isclose
-from statistics import mean
 import simpy
-from src.izgbs import voting_time_calcs
 from src.voter_sim import voter_sim
 from src.voter_sim import VotingLocation
 from src.settings import Settings
@@ -35,12 +32,6 @@ from src.settings import Settings
 #     )
 #
 #     assert 1 == 1
-
-
-# Because the "generate_voter" function only contains a random number generator, it
-# cannot be tested.
-def test_generate_voter_always_true():
-    assert 1 == 1
 
 
 def test_voting_location_init_dict_length():
@@ -127,6 +118,65 @@ def test_voter_sim_zero_machines_raises():
             arrival_rt=0.01,
             num_machines=0
         )
+
+
+def test_voter_sim_all_voters_must_vote():
+    # Override Settings with new POLL_OPEN = 1 hour
+    Settings.POLL_OPEN = 1.0
+    # num_voters = number of minutes the polls are open multiplied by 16 which
+    # is approximately double the arrival rate. This guarantees that under the
+    # current implementation (10-19-2021) not all voters will vote.
+    num_voters = int(Settings.POLL_OPEN * 60 * 16)
+    wait_times = voter_sim(
+        max_voters=num_voters,
+        vote_time_min=1,
+        vote_time_mode=2,
+        vote_time_max=3,
+        arrival_rt=100 / 13 / 60,
+        num_machines=10
+    )
+    # assert - all voters should have an assigned wait_time value indicating
+    # that they successfully voted
+    assert len(wait_times) == num_voters
+
+
+def test_generate_voter_random_arrival():
+    num_voters = 100
+    sim_time = 60
+    env = simpy.Environment()
+    location = VotingLocation(
+        env=env,
+        max_voters=num_voters,
+        num_machines=10,
+        vote_time_min=1,
+        vote_time_mode=2,
+        vote_time_max=3,
+        arrival_rt=100 / 13 / 60,
+        sim_time=sim_time
+    )
+    # First arrival is special because it does not depend on the previous
+    # voter(s)
+    arrival_times = [VotingLocation.generate_voter(location)]
+    # Get remaining arrival times
+    for i in range(1, num_voters):
+        # Because SimPy adds voters one at a time the arrival time of any
+        # given voter is equal to the randomly generated time plus the arrival
+        # time of the previous voter.
+        arrival_times.append(arrival_times[i-1] + VotingLocation.generate_voter(location))
+    # Arrival times should be randomly distributed, therefore the average
+    # arrival time should be in the middle of poll's hours of operation.
+    optimal_avg_arrival = sim_time / 2
+    actual_avg_arrival = 0.0
+    # Take the sum of all arrival times
+    for arrival in arrival_times:
+        actual_avg_arrival = actual_avg_arrival + arrival
+    # Calculate average
+    actual_avg_arrival = actual_avg_arrival / num_voters
+    # assert - the actual average arrival time should be within 10% of the
+    # optimal average
+    assert actual_avg_arrival == pytest.approx(optimal_avg_arrival, rel=0.1), \
+        "Observed average arrival times do not match expected random arrival times."
+
 
 # def test_voter_sim_usual_usage_1():
 #     _min, _mode, _max = voting_time_calcs(5)
