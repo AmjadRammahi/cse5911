@@ -6,3 +6,11 @@ __pycache__
 
 # xlsx lock files
 *.xlsx#
+
+# PyCharm virtual env
+venv*/
+
+# PyCharm .idea directory
+.idea/
+
+.coverage

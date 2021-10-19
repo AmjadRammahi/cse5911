@@ -154,15 +154,13 @@ def voter_sim(
             vote_time_mode (float) : mode voting time,
             vote_time_max (float) : max voting time,
             arrival_rt (float) : arrival mean,
-            num_machines (int) : nuber of voting machines at the location.
+            num_machines (int) : number of voting machines at the location.
 
         Returns:
             (list) : wait times.
     '''
-    # RANDOM_SEED = 56  # for repeatability during testing
-    # rand.seed(RANDOM_SEED)
 
-    sim_time = (Settings.POLL_END - Settings.POLL_START) * 60
+    sim_time = Settings.POLL_OPEN * 60
 
     # create an environment and start the setup process
     env = simpy.Environment()
