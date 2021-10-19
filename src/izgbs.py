@@ -1,15 +1,20 @@
 import math
 import logging
 import numpy as np
+<<<<<<< HEAD
 from numba import njit
 import pandas as pd
 import scipy.stats as st
 from statistics import mean
 import time
 
+=======
+import scipy.stats as st
+from statistics import mean
+>>>>>>> main
 from src.settings import Settings
 from src.voter_sim import voter_sim
-
+import src.global_var
 
 def voting_time_calcs(ballot_length: int) -> tuple:
     '''
@@ -23,15 +28,15 @@ def voting_time_calcs(ballot_length: int) -> tuple:
             (float) : vote time mode,
             (float) : vote time max.
     '''
-    min_voting_min = Settings.MIN_VOTING_MIN
-    min_voting_mode = Settings.MIN_VOTING_MODE
-    min_voting_max = Settings.MIN_VOTING_MAX
-    min_ballot = Settings.MIN_BALLOT
+    min_voting_min = src.global_var.MIN_VOTING_MIN
+    min_voting_mode = src.global_var.MIN_VOTING_MODE
+    min_voting_max = src.global_var.MIN_VOTING_MAX
+    min_ballot = src.global_var.MIN_BALLOT
 
-    max_voting_min = Settings.MAX_VOTING_MIN
-    max_voting_mode = Settings.MAX_VOTING_MODE
-    max_voting_max = Settings.MAX_VOTING_MAX
-    max_ballot = Settings.MAX_BALLOT
+    max_voting_min = src.global_var.MAX_VOTING_MIN
+    max_voting_mode = src.global_var.MAX_VOTING_MODE
+    max_voting_max = src.global_var.MAX_VOTING_MAX
+    max_ballot = src.global_var.MAX_BALLOT
 
     # VotingProcessingMin = MinVotingProcessingMin + (MaxVotingProcessingMin - MinVotingProcessingMin) / (MaxBallot - MinBallot) * (Ballot - MinBallot)
     # VotingProcessingMode = MinVotingProcessingMode + (MaxVotingProcessingMode - MinVotingProcessingMode) / (MaxBallot - MinBallot) * (Ballot - MinBallot)
@@ -58,7 +63,6 @@ def voting_time_calcs(ballot_length: int) -> tuple:
 
     return vote_min, vote_mode, vote_max
 
-
 def create_hypotheses_df(num_h):
     '''
         This function creates a dataframe to store hypotheses testing results.
@@ -69,6 +73,7 @@ def create_hypotheses_df(num_h):
         Returns:
             TODO
     '''
+<<<<<<< HEAD
     # This dataframe will contain 1 record per machine count
 <<<<<<< HEAD
     res_cols = ['Machines', 'Feasible', 'BatchAvg', 'BatchAvgMax']
@@ -82,6 +87,21 @@ def create_hypotheses_df(num_h):
     # hyp_results = pd.DataFrame(voter_cols, columns=res_cols)
     # hyp_results['Machines'] = (hyp_results.index + 1).astype('int')
     # Populates the Machine count field
+=======
+    hyp_results = {}
+    i = 0
+    # the index should have the same value of Machines
+    while i < num_h:
+        index = i + 1
+        res_dict = {}
+        res_dict['Machines'] = i + 1
+        res_dict['Feasible'] = 0
+        res_dict['BatchAvg'] = 0
+        res_dict['BatchMaxAvg'] = 0
+        hyp_results[index] = res_dict
+        i += 1
+    # # This dataframe will contain 1 record per machine count
+>>>>>>> main
 
     for i in range(num_h):
         voter_cols[i][0] = i+1
@@ -89,7 +109,6 @@ def create_hypotheses_df(num_h):
 
     # return hyp_results
     return voter_cols
-
 
 def izgbs(
     max_machines: int,
@@ -121,7 +140,7 @@ def izgbs(
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
 
     # create a dataframe for total number of machines
-    feasible_df = create_hypotheses_df(max_machines)
+    feasible_dict = create_hypotheses_df(max_machines)
 
     # start with the start value specified
     hypotheses_remain = True
@@ -143,7 +162,7 @@ def izgbs(
 
         # TODO: use AKPI
 
-        for _ in range(Settings.NUM_REPLICATIONS):
+        for _ in range(src.global_var.NUM_REPLICATIONS):
             # calculate voting times
             wait_times = voter_sim(
                 max_voters=max_voters,
@@ -165,6 +184,7 @@ def izgbs(
 
         # populate results
 <<<<<<< HEAD
+<<<<<<< HEAD
         # feasible_df.loc[feasible_df.Machines == num_test, 'BatchAvg'] = avg_wait_time_avg
         # feasible_df.loc[feasible_df.Machines == num_test, 'BatchAvgMax'] = max_wait_time_avg
 
@@ -183,15 +203,19 @@ def izgbs(
         feasible_df.loc[feasible_df.Machines == num_machines, 'BatchAvg'] = avg_wait_time_avg
         feasible_df.loc[feasible_df.Machines == num_machines, 'BatchMaxAvg'] = max_wait_time_avg
 >>>>>>> main
+=======
+        feasible_dict[num_machines]['BatchAvg'] = avg_wait_time_avg
+        feasible_dict[num_machines]['BatchMaxAvg'] = max_wait_time_avg
+>>>>>>> main
 
         # calculate test statistic
         if max_wait_time_std > 0:  # NOTE: avoiding divide by 0 error
-            z = (max_wait_time_avg - Settings.SERVICE_REQ + Settings.DELTA_INDIFFERENCE_ZONE) / max_wait_time_std
+            z = (max_wait_time_avg - src.global_var.SERVICE_REQ + src.global_var.DELTA_INDIFFERENCE_ZONE) / max_wait_time_std
             p = st.norm.cdf(z)
 
-            # feasible
             if p < sas_alpha_value:
                 # move to lower half
+<<<<<<< HEAD
 <<<<<<< HEAD
                 # feasible_df.loc[feasible_df.Machines >= num_test, 'Feasible'] = 1
                 feasible_df[:,1][feasible_df[:,0] >= num_test] = 1
@@ -211,16 +235,31 @@ def izgbs(
             num_test = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 =======
                 feasible_df.loc[feasible_df.Machines >= num_machines, 'Feasible'] = 1
+=======
+                #index_list = feasible_dict.keys()
+                for index in feasible_dict:
+                    if index >= num_machines:
+                        feasible_dict[index]['Feasible'] = 1
+>>>>>>> main
                 cur_upper = num_machines
                 num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
+                #index_list = feasible_dict.keys()
                 # move to upper half
-                feasible_df.loc[feasible_df.Machines == num_machines, 'Feasible'] = 0
+                for index in feasible_dict:
+                    if index == num_machines:
+                        feasible_dict[index]['Feasible'] = 0
+
+                # move to upper half
                 cur_lower = num_machines
                 num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
         else:
             # move to lower half
-            feasible_df.loc[feasible_df.Machines >= num_machines, 'Feasible'] = 1
+            # index_list = feasible_dict.keys()
+            for index in feasible_dict:
+                if index >= num_machines:
+                    feasible_dict[index]['Feasible'] = 0
+
             cur_upper = num_machines
             num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 >>>>>>> main
@@ -228,6 +267,12 @@ def izgbs(
         # check if there are hypotheses left to test
         hypotheses_remain = cur_lower < cur_upper and cur_lower < num_machines < cur_upper
 
+<<<<<<< HEAD
     logging.info(feasible_df)
     exit()
     return feasible_df
+=======
+    logging.info(feasible_dict)
+
+    return feasible_dict
+>>>>>>> main
