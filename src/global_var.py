@@ -20,33 +20,32 @@
 #     ('MAX_BALLOT', int32)
 # ]
 
-class Settings:
-    POLL_START = 6.5  # 6:30 am
-    POLL_END = 19.5  # 7:30 pm
-    POLL_OPEN = POLL_END - POLL_START
+POLL_START = 6.5  # 6:30 am
+POLL_END = 19.5  # 7:30 pm
+POLL_OPEN = POLL_END - POLL_START
 
-    BATCH_SIZE = 20
-    NUM_REPLICATIONS = 50
-    NUM_BATCHES = NUM_REPLICATIONS // BATCH_SIZE
+BATCH_SIZE = 20
+NUM_REPLICATIONS = 50
+NUM_BATCHES = NUM_REPLICATIONS // BATCH_SIZE
 
-    MIN_VOTING_MIN = 6
-    MIN_VOTING_MODE = 8
-    MIN_VOTING_MAX = 12
-    MIN_BALLOT = 0
+MIN_VOTING_MIN = 6
+MIN_VOTING_MODE = 8
+MIN_VOTING_MAX = 12
+MIN_BALLOT = 0
 
-    MAX_VOTING_MIN = 6
-    MAX_VOTING_MODE = 10
-    MAX_VOTING_MAX = 20
-    MAX_BALLOT = 10
+MAX_VOTING_MIN = 6
+MAX_VOTING_MODE = 10
+MAX_VOTING_MAX = 20
+MAX_BALLOT = 10
 
-    SERVICE_REQ = 30  # waiting time of voter who waits the longest
+SERVICE_REQ = 30  # waiting time of voter who waits the longest
 
-    MAX_MACHINES = 100
+MAX_MACHINES = 100
 
-    ALPHA_VALUE = 0.05  # probability of rejecting the null hypotheses
-    DELTA_INDIFFERENCE_ZONE = 0.5
+ALPHA_VALUE = 0.05  # probability of rejecting the null hypotheses
+DELTA_INDIFFERENCE_ZONE = 0.5
 
-    MIN_ALLOC_FLG = True  # is minimum allocation requirement
-    MIN_ALLOC = 4
+MIN_ALLOC_FLG = True  # is minimum allocation requirement
+MIN_ALLOC = 4
 
-    NUM_LOCATIONS = 5
+NUM_LOCATIONS = 5
