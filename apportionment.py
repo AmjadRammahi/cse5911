@@ -5,7 +5,6 @@ import logging
 import argparse
 import warnings
 
-from numba import jit,njit
 from tqdm import tqdm
 from pprint import pprint
 from multiprocessing import Pool

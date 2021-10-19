@@ -3,8 +3,6 @@
 # NOTE: this class holds all of the Settings needed to run this codebase.
 # Do not create an instance of this class. Instead, if you need to modify
 # a setting, then directly edit the class variable, ex: Settings.MIN_ALLOC_FLG = False
-from numba.experimental import jitclass
-from numba import int32, float32
 # spec = [
 #     ('POLL_START', float32[:]),
 #     ('POLL_END', float32[:]),
