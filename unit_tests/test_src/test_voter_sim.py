@@ -1,47 +1,40 @@
 import pytest
 from math import isclose
 from statistics import mean
+import simpy
 from src.izgbs import voting_time_calcs
 from src.voter_sim import voter_sim
-import random
+from src.voter_sim import VotingLocation
+from src.settings import Settings
 
 
 # NOTE: can simulate N number of times to reduce variance
 # NOTE: use math.isclose()
 
-# General set-up for all voter_sim unit tests. This step is important because
-# voter_sim uses objects that will be difficult to mock properly. Even if mocks
-# were implemented, it could make the tests too brittle to be useful.
+# General set-up for all voter_sim unit tests
 # @pytest.fixture(scope="function", autouse=True)
-def set_up():
-    # TODO: determine if this actually works as intended
-    random_seed = 42
-    random.seed(random_seed)
-
-    results_dict = {
-        "Voter 0": {
-            "Used": False
-        },
-        "Voter 1": {
-            "Used": False
-        }
-    }
-    max_voter = 2
-    vote_time_min = 2
-    vote_time_mode = 4
-    vote_time_max = 6
-    arrival_rt = 1
-    num_machines = 2
-
-    voter_sim(
-        results_dict,
-        max_voter,
-        vote_time_min,
-        vote_time_mode,
-        vote_time_max,
-        arrival_rt,
-        num_machines
-    )
+# def test_test():
+#     # TODO: determine if 'random.seed' actually improves run-to-run consistency
+#     random_seed = 42
+#     random.seed(random_seed)
+#
+#     max_voter = 2
+#     vote_time_min = 2
+#     vote_time_mode = 4
+#     vote_time_max = 6
+#     arrival_rt = 1
+#     num_machines = 2
+#
+#     wait_times = voter_sim(
+#         max_voters=2,
+#         vote_time_min=2,
+#         vote_time_mode=4,
+#         vote_time_max=6,
+#         arrival_rt=100 / 13 / 60,
+#         num_machines=2
+#     )
+#
+#     assert 1 == 1
 
 
 # Because the "generate_voter" function only contains a random number generator, it
@@ -50,12 +43,21 @@ def test_generate_voter_always_true():
     assert 1 == 1
 
 
-# def test_voter_update_results_dict(mocker):
-# mocker.patch.object(src.voter_sim.VotingLocation, 'self.results_dict',
-#                     {"Voter 0": {
-#                         "Used": False
-#                     }
-#                     })
+# Check that the correct dictionary size is generated
+def test_voting_location_init_dict_length():
+    num_voters = 100
+    location = VotingLocation(
+        env=simpy.Environment(),
+        max_voters=num_voters,
+        num_machines=100,
+        vote_time_min=1,
+        vote_time_mode=2,
+        vote_time_max=3,
+        arrival_rt=100 / 13 / 60,
+        sim_time=Settings.POLL_OPEN
+    )
+
+    assert len(location.voters_dict) == num_voters
 
 
 def test_voter_sim_many_machines_1():
