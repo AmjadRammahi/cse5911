@@ -160,7 +160,7 @@ def voter_sim(
             (list) : wait times.
     '''
 
-    sim_time = (Settings.POLL_END - Settings.POLL_START) * 60
+    sim_time = Settings.POLL_OPEN * 60
 
     # create an environment and start the setup process
     env = simpy.Environment()
