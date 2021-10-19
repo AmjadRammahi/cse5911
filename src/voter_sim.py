@@ -159,8 +159,6 @@ def voter_sim(
         Returns:
             (list) : wait times.
     '''
-    # RANDOM_SEED = 56  # for repeatability during testing
-    # rand.seed(RANDOM_SEED)
 
     sim_time = (Settings.POLL_END - Settings.POLL_START) * 60
 
