@@ -1,10 +1,10 @@
 from xlrd import Book
 
+from numba import jit
 from src.settings import Settings
 
 
 COLUMN_NAMES = ['Likely or Exp. Voters', 'Eligible Voters', 'Ballot Length Measure']
-
 
 def fetch_location_data(voting_config: Book) -> dict:
     '''
