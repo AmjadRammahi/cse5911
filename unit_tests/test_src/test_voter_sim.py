@@ -5,13 +5,14 @@ from src.izgbs import voting_time_calcs
 from src.voter_sim import voter_sim
 import random
 
+
 # NOTE: can simulate N number of times to reduce variance
 # NOTE: use math.isclose()
 
 # General set-up for all voter_sim unit tests. This step is important because
 # voter_sim uses objects that will be difficult to mock properly. Even if mocks
 # were implemented, it could make the tests too brittle to be useful.
-@pytest.fixture(scope="function", autouse=True)
+# @pytest.fixture(scope="function", autouse=True)
 def set_up():
     # TODO: determine if this actually works as intended
     random_seed = 42
@@ -124,7 +125,6 @@ def test_voter_sim_zero_machines_raises():
             arrival_rt=0.01,
             num_machines=0
         )
-
 
 # def test_voter_sim_usual_usage_1():
 #     _min, _mode, _max = voting_time_calcs(5)
