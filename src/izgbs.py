@@ -60,19 +60,14 @@ def create_hypotheses_df(num_h):
         Returns:
             TODO
     '''
-    hyp_results = {}
+    
+    hyp_results = np.zeros((num_h, 4))
+    
+    for i in range(num_h):
+        hyp_results[i][0] = i+1
+    
     i = 0
-    # the index should have the same value of Machines
-    while i < num_h:
-        index = i + 1
-        res_dict = {}
-        res_dict['Machines'] = i + 1
-        res_dict['Feasible'] = 0
-        res_dict['BatchAvg'] = 0
-        res_dict['BatchMaxAvg'] = 0
-        hyp_results[index] = res_dict
-        i += 1
-    # # This dataframe will contain 1 record per machine count
+    
 
     return hyp_results
 
@@ -104,7 +99,7 @@ def izgbs(
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
 
     # create a dataframe for total number of machines
-    feasible_dict = create_hypotheses_df(max_machines)
+    feasible_array = create_hypotheses_df(max_machines)
 
     # start with the start value specified
     hypotheses_remain = True
@@ -147,8 +142,8 @@ def izgbs(
         max_wait_time_std = np.std(max_wait_times)
 
         # populate results
-        feasible_dict[num_machines]['BatchAvg'] = avg_wait_time_avg
-        feasible_dict[num_machines]['BatchMaxAvg'] = max_wait_time_avg
+        feasible_array[:,2][feasible_array[:,0] == num_machines] = avg_wait_time_avg
+        feasible_array[:,3][feasible_array[:,0] == num_machines] = max_wait_time_avg
 
         # calculate test statistic
         if max_wait_time_std > 0:  # NOTE: avoiding divide by 0 error
@@ -158,34 +153,25 @@ def izgbs(
             if p < sas_alpha_value:
                 # move to lower half
                 #index_list = feasible_dict.keys()
-                for index in feasible_dict:
-                    if index >= num_machines:
-                        feasible_dict[index]['Feasible'] = 1
+                feasible_array[:,1][feasible_array[:,0] >= num_machines] = 1
                 cur_upper = num_machines
                 num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
                 #index_list = feasible_dict.keys()
                 # move to upper half
-                for index in feasible_dict:
-                    if index == num_machines:
-                        feasible_dict[index]['Feasible'] = 0
-
+                feasible_array[:,1][feasible_array[:,0] == num_machines] = 1
                 # move to upper half
                 cur_lower = num_machines
                 num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
         else:
             # move to lower half
             # index_list = feasible_dict.keys()
-            for index in feasible_dict:
-                if index >= num_machines:
-                    feasible_dict[index]['Feasible'] = 0
-
+            feasible_array[:,1][feasible_array[:,0] >= num_machines] = 1
             cur_upper = num_machines
             num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 
         # check if there are hypotheses left to test
         hypotheses_remain = cur_lower < cur_upper and cur_lower < num_machines < cur_upper
-
-    logging.info(feasible_dict)
-
-    return feasible_dict
+    
+    logging.info(feasible_array)
+    return feasible_array

@@ -3,6 +3,7 @@ import logging
 from numba import njit
 from src.settings import Settings
 from src.izgbs import izgbs
+import numpy as np
 
 
 def evaluate_location(location_data: dict) -> dict:
@@ -29,10 +30,11 @@ def evaluate_location(location_data: dict) -> dict:
         location_data
     )
 
-    loc_feas = []
-    for key, value in loc_res.items():
-        if value['Feasible'] == 1:
-            loc_feas.append(value)
+    loc_feas = loc_res[loc_res[:,1] == 1]
+
+    mach_min = np.amin(loc_feas[loc_feas[:,0]], axis=0)
+
+
 
     if len(loc_feas) > 0:
         machines_value = []
