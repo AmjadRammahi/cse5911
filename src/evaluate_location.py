@@ -30,51 +30,27 @@ def evaluate_location(location_data: dict) -> dict:
         location_data
     )
 
+
     loc_feas = loc_res[loc_res[:,1] == 1]
-
-    mach_min = np.amin(loc_feas[loc_feas[:,0]], axis=0)
-
-
-
-    if len(loc_feas) > 0:
-        machines_value = []
-        for result in loc_feas:
-            machines_value.append(result['Machines'])
-        
-        # find fewest feasible machines
-        mach_min = min(machines_value)
-
-        # keep the feasible setup with the fewest number of machines
-        loc_feas_min = {}
-        for key, value in loc_res.items():
-            if value['Machines'] == mach_min:
-                loc_feas_min = value
-                break
-
+    
+    if loc_feas.size != 0:
+        mach_min = loc_feas[:,0][0]
+        loc_feas_min = loc_feas[loc_feas[:,0] == mach_min]
+        print(loc_feas_min)
         # populate overall results with info for this location
-        
+
+        avg_wait = loc_feas_min[0,2]
+        max_wait = loc_feas_min[0,3]
         best_result['Resource'] = mach_min
-        best_result['Exp. Avg. Wait Time'] = loc_feas_min['BatchAvg']
-        best_result['Exp. Max. Wait Time'] = loc_feas_min['BatchMaxAvg']
-        
+        best_result['Exp. Avg. Wait Time'] = avg_wait
+        best_result['Exp. Max. Wait Time'] = max_wait
+
     else:
-        # no feasible setups, find lowest wait time (should work out to be max machines allowed)
-        max_avg = []
-        min_index = 0
-        for key, result in loc_res.items():
-            max_avg.append(result['BatchMaxAvg'])
-            min_index = key
-        wait_time_min = min(max_avg)
-
-        loc_res_min = loc_res[min_index]
-
-        # for key, result in loc_res.items():
-        #     if result['BatchMaxAvg'] == wait_time_min:
-        #         loc_res_min = result
-        #         break
-
-        best_result['Resource'] = loc_res_min['Machines']
-        best_result['Exp. Avg. Wait Time'] = loc_res_min['BatchAvg']
-        best_result['Exp. Max. Wait Time'] = loc_res_min['BatchMaxAvg']
+        print(loc_res[loc_res[:,3]])
+        print(np.min(loc_res[loc_res[:,3]]))
+        loc_res_min = np.min(loc_res[loc_res[:,3]])
+        best_result['Resource'] = loc_res_min[0]
+        best_result['Exp. Avg. Wait Time'] = loc_res_min[0,2]
+        best_result['Exp. Max. Wait Time'] = loc_res_min[0,3]
 
     return best_result
