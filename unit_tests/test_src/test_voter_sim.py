@@ -178,6 +178,46 @@ def test_generate_voter_random_arrival():
         "Observed average arrival times do not match expected random arrival times."
 
 
+def test_generate_voter_random_arrival_2():
+    # Many more total voters than the previous test. Designed to break the
+    # arrival times with a very late average time.
+    num_voters = int(Settings.POLL_OPEN * 60 * 16)
+    sim_time = 60
+    env = simpy.Environment()
+    location = VotingLocation(
+        env=env,
+        max_voters=num_voters,
+        num_machines=10,
+        vote_time_min=1,
+        vote_time_mode=2,
+        vote_time_max=3,
+        arrival_rt=100 / 13 / 60,
+        sim_time=sim_time
+    )
+    # First arrival is special because it does not depend on the previous
+    # voter(s)
+    arrival_times = [VotingLocation.generate_voter(location)]
+    # Get remaining arrival times
+    for i in range(1, num_voters):
+        # Because SimPy adds voters one at a time the arrival time of any
+        # given voter is equal to the randomly generated time plus the arrival
+        # time of the previous voter.
+        arrival_times.append(arrival_times[i-1] + VotingLocation.generate_voter(location))
+    # Arrival times should be randomly distributed, therefore the average
+    # arrival time should be in the middle of poll's hours of operation.
+    optimal_avg_arrival = sim_time / 2
+    actual_avg_arrival = 0.0
+    # Take the sum of all arrival times
+    for arrival in arrival_times:
+        actual_avg_arrival = actual_avg_arrival + arrival
+    # Calculate average
+    actual_avg_arrival = actual_avg_arrival / num_voters
+    # assert - the actual average arrival time should be within 10% of the
+    # optimal average
+    assert actual_avg_arrival == pytest.approx(optimal_avg_arrival, rel=0.1), \
+        "Observed average arrival times do not match expected random arrival times."
+
+
 # def test_voter_sim_usual_usage_1():
 #     _min, _mode, _max = voting_time_calcs(5)
 #     # act
