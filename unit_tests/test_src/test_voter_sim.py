@@ -81,15 +81,19 @@ def test_voter_sim_many_machines_2():
 
 def test_voter_sim_non_zero_wait_times():
     # act
+    # max_voters will be equal to the simulation time (in minutes) which will
+    # guarantee that voters will be forced to wait in line because there is
+    # only one machine.
+    sim_time = Settings.POLL_OPEN * 60
     wait_times = voter_sim(
-        max_voters=100,
+        max_voters=int(sim_time),
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
         arrival_rt=0.01,
-        num_machines=50
+        num_machines=1
     )
-    # assert - checking that the wait times are not all 0.0 if num_machines < num_voters
+    # assert - checking that the wait times are not all 0.0 if num_machines << num_voters
     assert wait_times.count(0.0) != 100
 
 
