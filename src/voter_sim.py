@@ -13,6 +13,7 @@ class VotingLocation(object):
         self,
         env: simpy.Environment,
         max_voters: int,
+        expected_voters: int,
         num_machines: int,
         vote_time_min: float,
         vote_time_mode: float,
@@ -26,6 +27,7 @@ class VotingLocation(object):
             for i in range(max_voters)
         }
         self.max_voters = max_voters
+        self.expected_voters = expected_voters
         self.vote_time_min = vote_time_min
         self.vote_time_mode = vote_time_mode
         self.vote_time_max = vote_time_max
@@ -153,6 +155,7 @@ class VotingLocation(object):
 def voter_sim(
     *,
     max_voters: int,
+    expected_voters: int,
     vote_time_min: float,
     vote_time_mode: float,
     vote_time_max: float,
@@ -164,6 +167,7 @@ def voter_sim(
 
         Params:
             max_voters (int) : maximum number of voters,
+            expected_voters (int) : the likely (or expected) number of voters,
             vote_time_min (float) : min voting time,
             vote_time_mode (float) : mode voting time,
             vote_time_max (float) : max voting time,
@@ -183,6 +187,7 @@ def voter_sim(
     location = VotingLocation(
         env,
         max_voters,
+        expected_voters,
         num_machines,
         vote_time_min,
         vote_time_mode,

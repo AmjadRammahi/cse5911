@@ -101,6 +101,7 @@ def izgbs(
     '''
     # read in parameters from locations dataframe
     max_voters = location_data['Eligible Voters']
+    expected_voters = location_data['Likely or Exp. Voters']
     ballot_length = location_data['Ballot Length Measure']
     arrival_rt = location_data['Arrival Mean']
 
@@ -134,6 +135,7 @@ def izgbs(
             # calculate voting times
             wait_times = voter_sim(
                 max_voters=max_voters,
+                expected_voters=expected_voters,
                 vote_time_min=vote_min,
                 vote_time_mode=vote_mode,
                 vote_time_max=vote_max,
