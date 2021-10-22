@@ -1,11 +1,11 @@
 import math
 import logging
-from numba import njit
+from numba import jit
 from src.settings import Settings
 from src.izgbs import izgbs
 import numpy as np
 
-
+@jit(nogil=True)
 def evaluate_location(location_data: dict) -> dict:
 
     '''
@@ -36,7 +36,6 @@ def evaluate_location(location_data: dict) -> dict:
     if loc_feas.size != 0:
         mach_min = loc_feas[:,0][0]
         loc_feas_min = loc_feas[loc_feas[:,0] == mach_min]
-        print(loc_feas_min)
         # populate overall results with info for this location
 
         avg_wait = loc_feas_min[0,2]

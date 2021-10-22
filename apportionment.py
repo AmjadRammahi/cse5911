@@ -1,11 +1,12 @@
+from pprint import pprint
 import xlrd
 import math
 import time
 import logging
 import argparse
 import warnings
+from numba import jit
 from tqdm import tqdm
-from pprint import pprint
 from multiprocessing import Pool
 from typing import List, Union, Optional
 from src.settings import Settings
@@ -13,7 +14,6 @@ from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
 from src.evaluate_location import evaluate_location
 from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning, NumbaWarning
-
 warnings.simplefilter('ignore', category=NumbaWarning)
 warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
 warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
@@ -31,6 +31,7 @@ parser.add_argument(
     help='log level, ex: --log debug'
 )
 
+@jit(nogil=True)
 def apportionment(location_data: dict) -> dict:
     '''
         Runs apportionment against the given locations.
@@ -83,8 +84,6 @@ if __name__ == '__main__':
         location['NUM_MACHINES'] = Settings.MAX_MACHINES
 
     results = apportionment(location_data)
-
     pprint(results)
-
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')

@@ -2,7 +2,7 @@ import simpy
 import logging
 import numpy as np
 from random import expovariate
-from numba import njit
+from numba import jit
 from src.settings import Settings
 
 # NOTE: this is TandemQueueWQuartile
@@ -135,7 +135,7 @@ class VotingLocation(object):
             size=None
         )
 
-
+@jit(nogil=True)
 def voter_sim(
     *,
     max_voters: int,

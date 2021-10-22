@@ -1,10 +1,11 @@
 from xlrd import Book
-
+from numba import jit
 from src.settings import Settings
 
 
 COLUMN_NAMES = ['Likely or Exp. Voters', 'Eligible Voters', 'Ballot Length Measure']
 
+@jit(nogil=True)
 def fetch_location_data(voting_config: Book) -> dict:
     '''
         Fetches the locations sheet from the input xlsx as a dict.

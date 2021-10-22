@@ -6,7 +6,8 @@ from statistics import mean
 from src.settings import Settings
 from src.voter_sim import voter_sim
 import src.global_var
-
+from numba import jit
+@jit(nogil=True)
 def voting_time_calcs(ballot_length: int) -> tuple:
     '''
         Calculates the min/mode/max/avg for a given ballot.
@@ -66,11 +67,10 @@ def create_hypotheses_df(num_h):
     for i in range(num_h):
         hyp_results[i][0] = i+1
     
-    i = 0
-    
-
     return hyp_results
 
+
+@jit(nogil=True)
 def izgbs(
     max_machines: int,
     start_machines: int,
