@@ -7,6 +7,7 @@ from src.settings import Settings
 from src.voter_sim import voter_sim
 import src.global_var
 
+
 def voting_time_calcs(ballot_length: int) -> tuple:
     '''
         Calculates the min/mode/max/avg for a given ballot.
@@ -54,6 +55,7 @@ def voting_time_calcs(ballot_length: int) -> tuple:
 
     return vote_min, vote_mode, vote_max
 
+
 def create_hypotheses_df(num_h):
     '''
         This function creates a dataframe to store hypotheses testing results.
@@ -79,6 +81,7 @@ def create_hypotheses_df(num_h):
     # # This dataframe will contain 1 record per machine count
 
     return hyp_results
+
 
 def izgbs(
     max_machines: int,
@@ -123,16 +126,14 @@ def izgbs(
         logging.info(f'Current lower bound: {cur_lower}')
         logging.info(f'\tTesting with: {num_machines}')
 
-        avg_wait_times = []
-        max_wait_times = []
+        batch_avg_wait_times = [[] for _ in src.global_var.NUM_BATCHES]
+        batch_max_wait_times = [[] for _ in src.global_var.NUM_BATCHES]
 
         # =====================================
 
-        # TODO: put batch stuff back
-
         # TODO: use AKPI
 
-        for _ in range(src.global_var.NUM_REPLICATIONS):
+        for i in range(src.global_var.NUM_REPLICATIONS):
             # calculate voting times
             wait_times = voter_sim(
                 max_voters=max_voters,
@@ -143,11 +144,22 @@ def izgbs(
                 num_machines=num_machines
             )
 
-            avg_wait_times.append(mean(wait_times))
-            max_wait_times.append(max(wait_times))
+            batch_avg_wait_times[i % src.global_var.NUM_BATCHES].append(mean(wait_times))
+            batch_max_wait_times[i % src.global_var.NUM_BATCHES].append(max(wait_times))
 
         # =====================================
 
+        # reduce individual batches to their mean's
+        avg_wait_times = [
+            mean(batch)
+            for batch in batch_avg_wait_times
+        ]
+        max_wait_times = [
+            mean(batch)
+            for batch in batch_max_wait_times
+        ]
+
+        # collect statistics
         avg_wait_time_avg = mean(avg_wait_times)
         max_wait_time_avg = mean(max_wait_times)
         max_wait_time_std = np.std(max_wait_times)
@@ -156,36 +168,28 @@ def izgbs(
         feasible_dict[num_machines]['BatchAvg'] = avg_wait_time_avg
         feasible_dict[num_machines]['BatchMaxAvg'] = max_wait_time_avg
 
-        # calculate test statistic
-        if max_wait_time_std > 0:  # NOTE: avoiding divide by 0 error
-            z = (max_wait_time_avg - src.global_var.SERVICE_REQ + src.global_var.DELTA_INDIFFERENCE_ZONE) / max_wait_time_std
+        # calculate test statistic (p)
+        if max_wait_time_std > 0:  # NOTE: > 0, avoiding divide by 0 error
+            z = (max_wait_time_avg - src.global_var.SERVICE_REQ + src.global_var.DELTA_INDIFFERENCE_ZONE) / (max_wait_time_std / math.sqrt(src.global_var.NUM_BATCHES))
             p = st.norm.cdf(z)
 
             if p < sas_alpha_value:
                 # move to lower half
-                #index_list = feasible_dict.keys()
-                for index in feasible_dict:
-                    if index >= num_machines:
-                        feasible_dict[index]['Feasible'] = 1
+
+                for key in feasible_dict:
+                    if key >= num_machines:
+                        feasible_dict[key]['Feasible'] = 1
+
                 cur_upper = num_machines
                 num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
-                #index_list = feasible_dict.keys()
                 # move to upper half
-                for index in feasible_dict:
-                    if index == num_machines:
-                        feasible_dict[index]['Feasible'] = 0
-
-                # move to upper half
+                feasible_dict[num_machines]['Feasible'] = 0
                 cur_lower = num_machines
                 num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
         else:
             # move to lower half
-            # index_list = feasible_dict.keys()
-            for index in feasible_dict:
-                if index >= num_machines:
-                    feasible_dict[index]['Feasible'] = 0
-
+            feasible_dict[num_machines]['Feasible'] = 0
             cur_upper = num_machines
             num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 
