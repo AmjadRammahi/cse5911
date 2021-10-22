@@ -71,15 +71,15 @@ class VotingLocation(object):
 
     def calc_arrival_rate(self):
         '''
-            Calculates an average arrival rate which will allow all voters to
-            arrive at the polling location before it closes. This average rate
-            is based on the number of hours the polling location is open and
-            the expected number of voters.
+            Calculates an average arrival rate which will allow the expected
+            number of voters to arrive at the polling location before it
+            closes. This average rate is based on the number of hours the
+            polling location is open and the expected number of voters.
 
         Returns:
             (float) : average voter arrival rate
         '''
-        return self.sim_time / self.max_voters
+        return self.sim_time / self.expected_voters
 
 
     def voter(self, name: str) -> None:
