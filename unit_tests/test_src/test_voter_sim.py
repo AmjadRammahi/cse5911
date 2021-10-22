@@ -39,6 +39,7 @@ def test_voting_location_init_dict_length():
     location = VotingLocation(
         env=simpy.Environment(),
         max_voters=num_voters,
+        expected_voters=num_voters,
         num_machines=100,
         vote_time_min=1,
         vote_time_mode=2,
@@ -55,6 +56,7 @@ def test_voter_sim_many_machines_1():
     # act
     wait_times = voter_sim(
         max_voters=100,
+        expected_voters=100,
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
@@ -69,6 +71,7 @@ def test_voter_sim_many_machines_2():
     # act
     wait_times = voter_sim(
         max_voters=100,
+        expected_voters=100,
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
@@ -81,12 +84,13 @@ def test_voter_sim_many_machines_2():
 
 def test_voter_sim_non_zero_wait_times():
     # act
-    # max_voters will be equal to the simulation time (in minutes) which will
+    # voters will be equal to the simulation time (in minutes) which will
     # guarantee that voters will be forced to wait in line because there is
     # only one machine.
     sim_time = Settings.POLL_OPEN * 60
     wait_times = voter_sim(
         max_voters=int(sim_time),
+        expected_voters=int(sim_time),
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
@@ -101,6 +105,7 @@ def test_voter_sim_zero_initial_wait_time():
     # act
     wait_times = voter_sim(
         max_voters=100,
+        expected_voters=100,
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
@@ -116,6 +121,7 @@ def test_voter_sim_zero_machines_raises():
     with pytest.raises(Exception):
         _ = voter_sim(
             max_voters=100,
+            expected_voters=100,
             vote_time_min=1,
             vote_time_mode=2,
             vote_time_max=3,
@@ -124,24 +130,28 @@ def test_voter_sim_zero_machines_raises():
         )
 
 
-def test_voter_sim_all_voters_must_vote():
-    # Override Settings with new POLL_OPEN = 1 hour
+def test_voter_sim_near_expected_should_vote():
+    # Override Settings and have the polls open for only one hour
     Settings.POLL_OPEN = 1.0
-    # num_voters = number of minutes the polls are open multiplied by 16 which
+    # max_voters = number of minutes the polls are open multiplied by 16 which
     # is approximately double the arrival rate. This guarantees that under the
-    # current implementation (10-19-2021) not all voters will vote.
-    num_voters = int(Settings.POLL_OPEN * 60 * 16)
+    # not all voters will vote.
+    max_voters = int(Settings.POLL_OPEN * 60 * 16)
+    # expected_voters will be set to half of the maximum which is similar to
+    # most locations in the original Excel file.
+    expected_voters = int(max_voters / 2)
     wait_times = voter_sim(
-        max_voters=num_voters,
+        max_voters=max_voters,
+        expected_voters=expected_voters,
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
         arrival_rt=100 / 13 / 60,
         num_machines=10
     )
-    # assert - all voters should have an assigned wait_time value indicating
-    # that they successfully voted
-    assert len(wait_times) == num_voters
+    # assert - the number of actual voters should be near (+-!0%) the number of
+    # expected voters
+    assert len(wait_times) == pytest.approx(expected_voters, rel=0.1)
 
 
 def test_generate_voter_random_arrival():
@@ -151,6 +161,7 @@ def test_generate_voter_random_arrival():
     location = VotingLocation(
         env=env,
         max_voters=num_voters,
+        expected_voters=num_voters,
         num_machines=10,
         vote_time_min=1,
         vote_time_mode=2,
@@ -191,6 +202,7 @@ def test_generate_voter_random_arrival_2():
     location = VotingLocation(
         env=env,
         max_voters=num_voters,
+        expected_voters=num_voters,
         num_machines=10,
         vote_time_min=1,
         vote_time_mode=2,
