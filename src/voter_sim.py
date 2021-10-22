@@ -19,7 +19,6 @@ class VotingLocation(object):
             vote_time_min: float,
             vote_time_mode: float,
             vote_time_max: float,
-            arrival_rt: float,
             sim_time: float
     ):
         self.env = env
@@ -194,7 +193,6 @@ def voter_sim(
         vote_time_min,
         vote_time_mode,
         vote_time_max,
-        arrival_rt,
         sim_time
     )
 
