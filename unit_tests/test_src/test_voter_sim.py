@@ -5,8 +5,7 @@ from src.voter_sim import VotingLocation
 from src.settings import Settings
 
 
-# NOTE: can simulate N number of times to reduce variance
-# NOTE: use math.isclose()
+# TODO: can simulate N number of times to reduce variance
 
 
 def test_voting_location_init_dict_length():
