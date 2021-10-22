@@ -50,6 +50,9 @@ class VotingLocation(object):
                 None.
         '''
         for i in range(self.max_voters):
+            # New voters cannot get in line after the polls close
+            if self.env.now >= self.sim_time:
+                break
             # generate arrival time for next voter
             t = self.generate_voter()
             yield self.env.timeout(t)
