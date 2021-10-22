@@ -114,7 +114,7 @@ def test_voter_sim_near_expected_should_vote():
 
 
 def test_generate_voter_random_arrival():
-    num_voters = 100
+    num_voters = 200
     sim_time = 60
     env = simpy.Environment()
     location = VotingLocation(
@@ -147,7 +147,7 @@ def test_generate_voter_random_arrival():
     actual_avg_arrival = actual_avg_arrival / num_voters
     # assert - the actual average arrival time should be within 10% of the
     # optimal average
-    assert actual_avg_arrival == pytest.approx(optimal_avg_arrival, rel=0.1), \
+    assert actual_avg_arrival == pytest.approx(optimal_avg_arrival, rel=0.20), \
         "Observed average arrival times do not match expected random arrival times."
 
 
