@@ -69,9 +69,10 @@ def test_voter_sim_many_machines_1():
 
 def test_voter_sim_many_machines_2():
     # act
+    num_voters = 100
     wait_times = voter_sim(
-        max_voters=100,
-        expected_voters=100,
+        max_voters=num_voters,
+        expected_voters=num_voters,
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
@@ -79,7 +80,7 @@ def test_voter_sim_many_machines_2():
         num_machines=100
     )
     # assert - checking that the wait times are all 0.0 if num_machines == num_voters
-    assert wait_times.count(0.0) == 100
+    assert wait_times.count(0.0) == len(wait_times)
 
 
 def test_voter_sim_non_zero_wait_times():
