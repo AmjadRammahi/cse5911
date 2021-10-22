@@ -5,21 +5,22 @@ from random import expovariate
 
 from src.settings import Settings
 
+
 # NOTE: this is TandemQueueWQuartile
 
 
 class VotingLocation(object):
     def __init__(
-        self,
-        env: simpy.Environment,
-        max_voters: int,
-        expected_voters: int,
-        num_machines: int,
-        vote_time_min: float,
-        vote_time_mode: float,
-        vote_time_max: float,
-        arrival_rt: float,
-        sim_time: float
+            self,
+            env: simpy.Environment,
+            max_voters: int,
+            expected_voters: int,
+            num_machines: int,
+            vote_time_min: float,
+            vote_time_mode: float,
+            vote_time_max: float,
+            arrival_rt: float,
+            sim_time: float
     ):
         self.env = env
         self.voters_dict = {
@@ -68,7 +69,6 @@ class VotingLocation(object):
         '''
         return expovariate(1.0 / self.arrival_rt)
 
-
     def calc_arrival_rate(self):
         '''
             Calculates an average arrival rate which will allow the expected
@@ -80,7 +80,6 @@ class VotingLocation(object):
             (float) : average voter arrival rate
         '''
         return self.sim_time / self.expected_voters
-
 
     def voter(self, name: str) -> None:
         '''
@@ -153,14 +152,14 @@ class VotingLocation(object):
 
 
 def voter_sim(
-    *,
-    max_voters: int,
-    expected_voters: int,
-    vote_time_min: float,
-    vote_time_mode: float,
-    vote_time_max: float,
-    arrival_rt: float,
-    num_machines: int
+        *,
+        max_voters: int,
+        expected_voters: int,
+        vote_time_min: float,
+        vote_time_mode: float,
+        vote_time_max: float,
+        arrival_rt: float,
+        num_machines: int
 ) -> list:
     '''
         Executes a voting simulation given various inputs.
