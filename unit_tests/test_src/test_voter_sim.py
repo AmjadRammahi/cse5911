@@ -18,7 +18,6 @@ def test_voting_location_init_dict_length():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        arrival_rt=100 / 13 / 60,
         sim_time=Settings.POLL_OPEN
     )
     # assert - checking that the correct dictionary size is generated
@@ -26,22 +25,7 @@ def test_voting_location_init_dict_length():
     assert len(location.voters_dict) == num_voters
 
 
-def test_voter_sim_many_machines_1():
-    # act
-    wait_times = voter_sim(
-        max_voters=100,
-        expected_voters=100,
-        vote_time_min=1,
-        vote_time_mode=2,
-        vote_time_max=3,
-        arrival_rt=100 / 13 / 60,
-        num_machines=100
-    )
-    # assert - checking that all voters get to vote if num_machines == num_voters
-    assert len(wait_times) == 100
-
-
-def test_voter_sim_many_machines_2():
+def test_voter_sim_many_machines():
     # act
     num_voters = 100
     wait_times = voter_sim(
@@ -141,7 +125,6 @@ def test_generate_voter_random_arrival():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        arrival_rt=100 / 13 / 60,
         sim_time=sim_time
     )
     # First arrival is special because it does not depend on the previous
@@ -182,7 +165,6 @@ def test_generate_voter_random_arrival_2():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        arrival_rt=100 / 13 / 60,
         sim_time=sim_time
     )
     # First arrival is special because it does not depend on the previous
