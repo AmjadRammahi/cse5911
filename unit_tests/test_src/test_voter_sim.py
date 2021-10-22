@@ -8,31 +8,6 @@ from src.settings import Settings
 # NOTE: can simulate N number of times to reduce variance
 # NOTE: use math.isclose()
 
-# General set-up for all voter_sim unit tests
-# @pytest.fixture(scope="function", autouse=True)
-# def test_test():
-#     # TODO: determine if 'random.seed' actually improves run-to-run consistency
-#     random_seed = 42
-#     random.seed(random_seed)
-#
-#     max_voter = 2
-#     vote_time_min = 2
-#     vote_time_mode = 4
-#     vote_time_max = 6
-#     arrival_rt = 1
-#     num_machines = 2
-#
-#     wait_times = voter_sim(
-#         max_voters=2,
-#         vote_time_min=2,
-#         vote_time_mode=4,
-#         vote_time_max=6,
-#         arrival_rt=100 / 13 / 60,
-#         num_machines=2
-#     )
-#
-#     assert 1 == 1
-
 
 def test_voting_location_init_dict_length():
     num_voters = 100
