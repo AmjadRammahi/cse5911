@@ -56,33 +56,6 @@ def voting_time_calcs(ballot_length: int) -> tuple:
     return vote_min, vote_mode, vote_max
 
 
-def create_hypotheses_df(num_h):
-    '''
-        This function creates a dataframe to store hypotheses testing results.
-
-        Params:
-            num_h () : TODO.
-
-        Returns:
-            TODO
-    '''
-    hyp_results = {}
-    i = 0
-    # the index should have the same value of Machines
-    while i < num_h:
-        index = i + 1
-        res_dict = {}
-        res_dict['Machines'] = i + 1
-        res_dict['Feasible'] = 0
-        res_dict['BatchAvg'] = 0
-        res_dict['BatchMaxAvg'] = 0
-        hyp_results[index] = res_dict
-        i += 1
-    # # This dataframe will contain 1 record per machine count
-
-    return hyp_results
-
-
 def izgbs(
     max_machines: int,
     start_machines: int,
@@ -113,7 +86,15 @@ def izgbs(
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
 
     # create a dataframe for total number of machines
-    feasible_dict = create_hypotheses_df(max_machines)
+    feasible_dict = {
+        num_m + 1: {
+            'Machines': num_m + 1,
+            'Feasible': 0,
+            'BatchAvg': 0,
+            'BatchMaxAvg': 0
+        }
+        for num_m in range(max_machines)
+    }
 
     # start with the start value specified
     hypotheses_remain = True
@@ -126,8 +107,8 @@ def izgbs(
         logging.info(f'Current lower bound: {cur_lower}')
         logging.info(f'\tTesting with: {num_machines}')
 
-        batch_avg_wait_times = [[] for _ in src.global_var.NUM_BATCHES]
-        batch_max_wait_times = [[] for _ in src.global_var.NUM_BATCHES]
+        batch_avg_wait_times = [[] for _ in range(src.global_var.NUM_BATCHES)]
+        batch_max_wait_times = [[] for _ in range(src.global_var.NUM_BATCHES)]
 
         # =====================================
 
