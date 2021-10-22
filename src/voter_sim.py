@@ -5,20 +5,21 @@ from random import expovariate
 
 from src.settings import Settings
 
+
 # NOTE: this is TandemQueueWQuartile
 
 
 class VotingLocation(object):
     def __init__(
-        self,
-        env: simpy.Environment,
-        max_voters: int,
-        num_machines: int,
-        vote_time_min: float,
-        vote_time_mode: float,
-        vote_time_max: float,
-        arrival_rt: float,
-        sim_time: float
+            self,
+            env: simpy.Environment,
+            max_voters: int,
+            expected_voters: int,
+            num_machines: int,
+            vote_time_min: float,
+            vote_time_mode: float,
+            vote_time_max: float,
+            sim_time: float
     ):
         self.env = env
         self.voters_dict = {
@@ -26,12 +27,13 @@ class VotingLocation(object):
             for i in range(max_voters)
         }
         self.max_voters = max_voters
+        self.expected_voters = expected_voters
         self.vote_time_min = vote_time_min
         self.vote_time_mode = vote_time_mode
         self.vote_time_max = vote_time_max
-        self.arrival_rt = arrival_rt
         self.voting_machines = simpy.Resource(env, capacity=num_machines)
         self.sim_time = sim_time
+        self.arrival_rt = self.calc_arrival_rate()
 
         self.wait_times = []
 
@@ -47,6 +49,9 @@ class VotingLocation(object):
                 None.
         '''
         for i in range(self.max_voters):
+            # New voters cannot get in line after the polls close
+            if self.env.now >= self.sim_time:
+                break
             # generate arrival time for next voter
             t = self.generate_voter()
             yield self.env.timeout(t)
@@ -65,6 +70,18 @@ class VotingLocation(object):
                 (float) : voter iter-arrival time.
         '''
         return expovariate(1.0 / self.arrival_rt)
+
+    def calc_arrival_rate(self):
+        '''
+            Calculates an average arrival rate which will allow the expected
+            number of voters to arrive at the polling location before it
+            closes. This average rate is based on the number of hours the
+            polling location is open and the expected number of voters.
+
+        Returns:
+            (float) : average voter arrival rate
+        '''
+        return self.sim_time / self.expected_voters
 
     def voter(self, name: str) -> None:
         '''
@@ -137,19 +154,21 @@ class VotingLocation(object):
 
 
 def voter_sim(
-    *,
-    max_voters: int,
-    vote_time_min: float,
-    vote_time_mode: float,
-    vote_time_max: float,
-    arrival_rt: float,
-    num_machines: int
+        *,
+        max_voters: int,
+        expected_voters: int,
+        vote_time_min: float,
+        vote_time_mode: float,
+        vote_time_max: float,
+        arrival_rt: float,
+        num_machines: int
 ) -> list:
     '''
         Executes a voting simulation given various inputs.
 
         Params:
             max_voters (int) : maximum number of voters,
+            expected_voters (int) : the likely (or expected) number of voters,
             vote_time_min (float) : min voting time,
             vote_time_mode (float) : mode voting time,
             vote_time_max (float) : max voting time,
@@ -169,15 +188,15 @@ def voter_sim(
     location = VotingLocation(
         env,
         max_voters,
+        expected_voters,
         num_machines,
         vote_time_min,
         vote_time_mode,
         vote_time_max,
-        arrival_rt,
         sim_time
     )
 
-    # environment will run until end of simulation time
-    env.run(until=sim_time)
+    # environment will run until all voters have finished voting
+    env.run()
 
     return location.wait_times

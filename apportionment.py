@@ -14,11 +14,6 @@ from src.settings import Settings
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
 from src.evaluate_location import evaluate_location
-from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning, NumbaWarning
-
-warnings.simplefilter('ignore', category=NumbaWarning)
-warnings.simplefilter('ignore', category=NumbaDeprecationWarning)
-warnings.simplefilter('ignore', category=NumbaPendingDeprecationWarning)
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -32,6 +27,7 @@ parser.add_argument(
     default='info',
     help='log level, ex: --log debug'
 )
+
 
 def apportionment(location_data: dict) -> dict:
     '''
