@@ -63,13 +63,13 @@ class VotingLocation(object):
     def generate_voter(self) -> float:
         '''
             Returns a float to represent the arrival time of the next voter
-            from an exponential distribution.
-            https://en.wikipedia.org/wiki/Exponential_distribution
+            from a poisson distribution.
+            https://en.wikipedia.org/wiki/Poisson_distribution
 
             Returns:
                 (float) : voter iter-arrival time.
         '''
-        return expovariate(1.0 / self.arrival_rt)
+        return np.random.poisson(self.arrival_rt)
 
     def calc_arrival_rate(self):
         '''
