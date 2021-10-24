@@ -81,6 +81,9 @@ def izgbs(
     max_voters = location_data['Eligible Voters']
     expected_voters = location_data['Likely or Exp. Voters']
     ballot_length = location_data['Ballot Length Measure']
+    # NOTE: arrival rate is currently recalculated within 'voter_sim.py' based
+    # on the number of minutes the poll is open divided by the number of
+    # expected voters.
     arrival_rt = location_data['Arrival Mean']
 
     # calculate voting times
