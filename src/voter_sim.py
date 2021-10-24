@@ -19,6 +19,7 @@ class VotingLocation(object):
             vote_time_min: float,
             vote_time_mode: float,
             vote_time_max: float,
+            arrival_rt: float,
             sim_time: float
     ):
         self.env = env
@@ -33,7 +34,7 @@ class VotingLocation(object):
         self.vote_time_max = vote_time_max
         self.voting_machines = simpy.Resource(env, capacity=num_machines)
         self.sim_time = sim_time
-        self.arrival_rt = self.calc_arrival_rate()
+        self.arrival_rt = arrival_rt
 
         self.wait_times = []
 
@@ -63,13 +64,13 @@ class VotingLocation(object):
     def generate_voter(self) -> float:
         '''
             Returns a float to represent the arrival time of the next voter
-            from a poisson distribution.
-            https://en.wikipedia.org/wiki/Poisson_distribution
+            from an exponential distribution.
+            https://en.wikipedia.org/wiki/Exponential_distribution
 
             Returns:
                 (float) : voter iter-arrival time.
         '''
-        return np.random.poisson(self.arrival_rt)
+        return expovariate(1.0 / self.arrival_rt)
 
     def calc_arrival_rate(self):
         '''
@@ -193,6 +194,7 @@ def voter_sim(
         vote_time_min,
         vote_time_mode,
         vote_time_max,
+        arrival_rt,
         sim_time
     )
 
