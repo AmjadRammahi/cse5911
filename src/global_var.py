@@ -24,8 +24,8 @@ POLL_START = 6.5  # 6:30 am
 POLL_END = 19.5  # 7:30 pm
 POLL_OPEN = POLL_END - POLL_START
 
-BATCH_SIZE = 10
-NUM_REPLICATIONS = 50
+BATCH_SIZE = 2
+NUM_REPLICATIONS = 6
 NUM_BATCHES = NUM_REPLICATIONS // BATCH_SIZE
 
 MIN_VOTING_MIN = 6
@@ -40,12 +40,12 @@ MAX_BALLOT = 10
 
 SERVICE_REQ = 30  # waiting time of voter who waits the longest
 
-MAX_MACHINES = 100
+MAX_MACHINES = 200
 
 ALPHA_VALUE = 0.05  # probability of rejecting the null hypotheses
 DELTA_INDIFFERENCE_ZONE = 0.5
 
 MIN_ALLOC_FLG = True  # is minimum allocation requirement
-MIN_ALLOC = 4
+MIN_ALLOC = 1
 
 NUM_LOCATIONS = 5

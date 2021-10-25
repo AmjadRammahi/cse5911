@@ -10,6 +10,7 @@ from pprint import pprint
 from multiprocessing import Pool
 from typing import List, Union, Optional
 
+import src.global_var
 from src.settings import Settings
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
@@ -29,13 +30,14 @@ parser.add_argument(
 )
 
 
-def apportionment(location_data: dict) -> dict:
+def apportionment(location_data: dict, service_req: float = src.global_var.SERVICE_REQ) -> dict:
     '''
         Runs apportionment against the given locations.
 
         Params:
             location_data (dict) :
-                contains the amt of voters and the ballot length for each location.
+                contains the amt of voters and the ballot length for each location,
+            service_req (float) : max service requirement.
 
         Returns:
             (dict) : locations with the min feasible
@@ -43,7 +45,7 @@ def apportionment(location_data: dict) -> dict:
     '''
     # NOTE: locations start at 1, not 0
     location_params = [
-        location_data[i + 1]
+        (location_data[i + 1], service_req)
         for i in range(Settings.NUM_LOCATIONS)
     ]
 
@@ -76,9 +78,6 @@ if __name__ == '__main__':
     # Main
 
     start_time = time.perf_counter()
-
-    for location in location_data.values():
-        location['NUM_MACHINES'] = Settings.MAX_MACHINES
 
     results = apportionment(location_data)
 
