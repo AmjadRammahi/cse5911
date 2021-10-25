@@ -186,16 +186,16 @@ def test_generate_voter_random_arrival_2():
         "Observed average arrival times do not match expected random arrival times."
 
 
-# def test_voter_sim_usual_usage_1():
-#     _min, _mode, _max = voting_time_calcs(5)
-#     # act
-#     wait_times = voter_sim(
-#         max_voters=914,
-#         vote_time_min=_min,
-#         vote_time_mode=_mode,
-#         vote_time_max=_max,
-#         arrival_rt=914 / 13 / 60,
-#         num_machines=7
-#     )
-#     # assert
-#     assert mean(wait_times) == 1.0
+def test_voter_sim_total_voters_must_not_exceed_max():
+    max_voters = 1
+    wait_times = voter_sim(
+        max_voters=max_voters,
+        expected_voters=max_voters*10,
+        vote_time_min=1,
+        vote_time_mode=2,
+        vote_time_max=3,
+        num_machines=1
+    )
+    # assert - total number of voters should never exceed the maximum number of
+    # registered voters
+    assert len(wait_times) <= max_voters
