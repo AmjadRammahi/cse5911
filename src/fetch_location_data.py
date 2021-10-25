@@ -5,6 +5,7 @@ from src.settings import Settings
 
 COLUMN_NAMES = ['Likely or Exp. Voters', 'Eligible Voters', 'Ballot Length Measure']
 
+
 def fetch_location_data(voting_config: Book) -> dict:
     '''
         Fetches the locations sheet from the input xlsx as a dict.
@@ -25,8 +26,5 @@ def fetch_location_data(voting_config: Book) -> dict:
 
         data = map(int, location_sheet.row_values(i)[1:])  # [1:] drops ID column
         location_data[i] = dict(zip(COLUMN_NAMES, data))
-        location_data[i].update({
-            'Arrival Mean': location_data[i]['Likely or Exp. Voters'] / Settings.POLL_OPEN / 60
-        })
 
     return location_data
