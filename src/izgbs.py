@@ -6,8 +6,8 @@ from statistics import mean
 from src.settings import Settings
 from src.voter_sim import voter_sim
 import src.global_var
-from numba import jit
-@jit(nogil=True)
+
+
 def voting_time_calcs(ballot_length: int) -> tuple:
     '''
         Calculates the min/mode/max/avg for a given ballot.
@@ -53,24 +53,9 @@ def voting_time_calcs(ballot_length: int) -> tuple:
 
     return vote_min, vote_mode, vote_max
 
-def create_hypotheses_df(num_h):
-    '''
-        This function creates a dataframe to store hypotheses testing results.
-        Params:
-            num_h () : TODO.
-        Returns:
-            TODO
-    '''
-    
-    hyp_results = np.zeros((num_h, 4))
-    
-    for i in range(num_h):
-        hyp_results[i][0] = i+1
-    
-    return hyp_results
 
 
-@jit(nogil=True)
+
 def izgbs(
     max_machines: int,
     start_machines: int,
@@ -92,6 +77,7 @@ def izgbs(
     '''
     # read in parameters from locations dataframe
     max_voters = location_data['Eligible Voters']
+    expected_voters = location_data['Likely or Exp. Voters']
     ballot_length = location_data['Ballot Length Measure']
     arrival_rt = location_data['Arrival Mean']
 
@@ -99,7 +85,11 @@ def izgbs(
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
 
     # create a dataframe for total number of machines
-    feasible_array = create_hypotheses_df(max_machines)
+    feasible_list = np.zeros((max_machines, 4))
+
+    for i in range(max_machines):
+        feasible_list[i][0] = i + 1
+
 
     # start with the start value specified
     hypotheses_remain = True
@@ -112,19 +102,18 @@ def izgbs(
         logging.info(f'Current lower bound: {cur_lower}')
         logging.info(f'\tTesting with: {num_machines}')
 
-        avg_wait_times = []
-        max_wait_times = []
+        batch_avg_wait_times = [[] for _ in range(src.global_var.NUM_BATCHES)]
+        batch_max_wait_times = [[] for _ in range(src.global_var.NUM_BATCHES)]
 
         # =====================================
 
-        # TODO: put batch stuff back
-
         # TODO: use AKPI
 
-        for _ in range(src.global_var.NUM_REPLICATIONS):
+        for i in range(src.global_var.NUM_REPLICATIONS):
             # calculate voting times
             wait_times = voter_sim(
                 max_voters=max_voters,
+                expected_voters=expected_voters,
                 vote_time_min=vote_min,
                 vote_time_mode=vote_mode,
                 vote_time_max=vote_max,
@@ -132,46 +121,57 @@ def izgbs(
                 num_machines=num_machines
             )
 
-            avg_wait_times.append(mean(wait_times))
-            max_wait_times.append(max(wait_times))
+            batch_avg_wait_times[i % src.global_var.NUM_BATCHES].append(mean(wait_times))
+            batch_max_wait_times[i % src.global_var.NUM_BATCHES].append(max(wait_times))
 
         # =====================================
 
+        # reduce individual batches to their mean's
+        avg_wait_times = [
+            mean(batch)
+            for batch in batch_avg_wait_times
+        ]
+        max_wait_times = [
+            mean(batch)
+            for batch in batch_max_wait_times
+        ]
+
+        # collect statistics
         avg_wait_time_avg = mean(avg_wait_times)
         max_wait_time_avg = mean(max_wait_times)
         max_wait_time_std = np.std(max_wait_times)
 
         # populate results
-        feasible_array[:,2][feasible_array[:,0] == num_machines] = avg_wait_time_avg
-        feasible_array[:,3][feasible_array[:,0] == num_machines] = max_wait_time_avg
+        # populate results
+        feasible_list[:,2][feasible_list[:,0] == num_machines] = avg_wait_time_avg
+        feasible_list[:,3][feasible_list[:,0] == num_machines] = max_wait_time_avg
 
-        # calculate test statistic
-        if max_wait_time_std > 0:  # NOTE: avoiding divide by 0 error
-            z = (max_wait_time_avg - src.global_var.SERVICE_REQ + src.global_var.DELTA_INDIFFERENCE_ZONE) / max_wait_time_std
+        # calculate test statistic (p)
+        if max_wait_time_std > 0:  # NOTE: > 0, avoiding divide by 0 error
+            z = (max_wait_time_avg - src.global_var.SERVICE_REQ + src.global_var.DELTA_INDIFFERENCE_ZONE) / (max_wait_time_std / math.sqrt(src.global_var.NUM_BATCHES))
             p = st.norm.cdf(z)
 
             if p < sas_alpha_value:
                 # move to lower half
-                #index_list = feasible_dict.keys()
-                feasible_array[:,1][feasible_array[:,0] >= num_machines] = 1
+
+                feasible_list[:,1][feasible_list[:,0] >= num_machines] = 1
+
                 cur_upper = num_machines
                 num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
-                #index_list = feasible_dict.keys()
                 # move to upper half
-                feasible_array[:,1][feasible_array[:,0] == num_machines] = 1
-                # move to upper half
+                feasible_list[:,1][feasible_list[:,0] >= num_machines] = 0
                 cur_lower = num_machines
                 num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
         else:
             # move to lower half
-            # index_list = feasible_dict.keys()
-            feasible_array[:,1][feasible_array[:,0] >= num_machines] = 1
+            feasible_list[:,1][feasible_list[:,0] >= num_machines] = 0
             cur_upper = num_machines
             num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 
         # check if there are hypotheses left to test
         hypotheses_remain = cur_lower < cur_upper and cur_lower < num_machines < cur_upper
     
-    logging.info(feasible_array)
-    return feasible_array
+    logging.info(feasible_list)
+
+    return feasible_list

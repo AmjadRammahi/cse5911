@@ -12,3 +12,4 @@ coverage
 pytest-cov
 pytest-mock
 jit
+auto-py-to-exe

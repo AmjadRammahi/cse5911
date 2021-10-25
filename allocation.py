@@ -39,6 +39,9 @@ if __name__ == '__main__':
     # =========================================================================
     # Main
 
+    # NOTE/TODO: use a binary search on the service_req to keep wait times uniform
+    # NOTE: rerun final service_req 2 or more times for guarantee
+
     total_machines_available = 50
 
     for location in location_data.values():
