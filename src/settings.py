@@ -3,6 +3,9 @@
 # NOTE: this class holds all of the Settings needed to run this codebase.
 # Do not create an instance of this class. Instead, if you need to modify
 # a setting, then directly edit the class variable, ex: Settings.MIN_ALLOC_FLG = False
+# from numba import int32, float32
+# from numba.experimental import jitclass
+
 # spec = [
 #     ('POLL_START', float32[:]),
 #     ('POLL_END', float32[:]),
@@ -17,8 +20,16 @@
 #     ('MAX_VOTING_MIN', int32),
 #     ('MAX_VOTING_MODE', int32),
 #     ('MAX_VOTING_MAX', int32),
-#     ('MAX_BALLOT', int32)
+#     ('MAX_BALLOT', int32),
+#     ('SERVICE_REQ', float32[:]),
+#     ('MAX_MACHINES', int32),
+#     ('ALPHA_VALUE', float32[:]),
+#     ('DELTA_INDIFFERENCE_ZONE', float32[:]),
+#     ('MIN_ALLOC_FLG', int32),
+#     ('MIN_ALLOC', int32),
+#     ('NUM_LOCATIONS', int32)
 # ]
+
 
 class Settings:
     POLL_START = 6.5  # 6:30 am
@@ -39,14 +50,14 @@ class Settings:
     MAX_VOTING_MAX = 20
     MAX_BALLOT = 10
 
-    SERVICE_REQ = 30  # waiting time of voter who waits the longest
+    SERVICE_REQ = 30.0  # waiting time of voter who waits the longest
 
     MAX_MACHINES = 200
 
     ALPHA_VALUE = 0.05  # probability of rejecting the null hypotheses
     DELTA_INDIFFERENCE_ZONE = 0.5
 
-    MIN_ALLOC_FLG = True  # is minimum allocation requirement
-    MIN_ALLOC = 4
+    MIN_ALLOC_FLG = 1  # is minimum allocation requirement
+    MIN_ALLOC = 1
 
     NUM_LOCATIONS = 5

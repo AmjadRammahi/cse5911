@@ -12,7 +12,7 @@ def evaluate_location(location_data: dict) -> dict:
         Runs IZGBS on a specified location, return results in dict best_results.
 
         Params:
-            location_data (dict) : location data.
+            location_data (dict) : location data, service_req.
 
         Returns:
             (dict) : contains all field that going to fill in result_df.
@@ -27,7 +27,8 @@ def evaluate_location(location_data: dict) -> dict:
         start_val,
         Settings.MIN_ALLOC,
         sas_alpha_value,
-        location_data
+        location_data[0],
+        location_data[1]
     )
 
     loc_feas = []

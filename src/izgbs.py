@@ -61,7 +61,8 @@ def izgbs(
     start_machines: int,
     min_machines: int,
     sas_alpha_value: float,
-    location_data: dict
+    location_data: dict,
+    service_req: float
 ):
     '''
         Main IZGBS function.
@@ -72,7 +73,8 @@ def izgbs(
             start_machines (int) : starting number of machines to test,
             min_machines (int) : minimum allowed number of machines,
             sas_alpha_value (float) : TODO,
-            location_data (list) : location data.
+            location_data (list) : location data,
+            service_req (float) max service requirement.
 
         Returns:
             (pd.DataFrame) : feasability of each resource amt.
@@ -153,7 +155,7 @@ def izgbs(
 
         # calculate test statistic (p)
         if max_wait_time_std > 0:  # NOTE: > 0, avoiding divide by 0 error
-            z = (max_wait_time_avg - src.global_var.SERVICE_REQ + src.global_var.DELTA_INDIFFERENCE_ZONE) / (max_wait_time_std / math.sqrt(src.global_var.NUM_BATCHES))
+            z = (max_wait_time_avg - service_req + src.global_var.DELTA_INDIFFERENCE_ZONE) / (max_wait_time_std / math.sqrt(src.global_var.NUM_BATCHES))
             p = st.norm.cdf(z)
 
             if p < sas_alpha_value:

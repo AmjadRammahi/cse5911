@@ -4,6 +4,7 @@ import argparse
 from pprint import pprint
 
 import src.global_var
+from src.settings import Settings
 from apportionment import apportionment
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
@@ -30,6 +31,8 @@ if __name__ == '__main__':
     # =========================================================================
     # Setup
 
+    Settings
+
     logging.info(f'reading {args.input_xlsx}')
     voting_config = xlrd.open_workbook(args.input_xlsx)
 
@@ -39,7 +42,7 @@ if __name__ == '__main__':
     # =========================================================================
     # Main
 
-    total_machines_available = 150
+    total_machines_available = 120
     acceptable_resource_miss = 10
 
     upper_service_req = 500
@@ -54,8 +57,7 @@ if __name__ == '__main__':
 
         # running apportionment on all locations
         logging.critical(f'allocation - running apportionment with service req: {current_service_req:.2f}')
-        src.global_var.SERVICE_REQ = current_service_req
-        results = apportionment(location_data)
+        results = apportionment(location_data, current_service_req)
 
         # collecting new total
         current_total = sum(res['Resource'] for res in results.values())
