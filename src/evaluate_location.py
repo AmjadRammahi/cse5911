@@ -2,8 +2,10 @@ import math
 import logging
 from pprint import pprint
 
+import src.global_var
 from src.settings import Settings
 from src.izgbs import izgbs
+
 
 def evaluate_location(location_data: dict) -> dict:
     '''
@@ -17,11 +19,11 @@ def evaluate_location(location_data: dict) -> dict:
     '''
     best_result = {}
 
-    start_val = math.ceil((location_data['NUM_MACHINES'] - 1) / 2)
-    sas_alpha_value = Settings.ALPHA_VALUE / math.log2(location_data['NUM_MACHINES'] - 1)
+    start_val = math.ceil((src.global_var.MAX_MACHINES - 1) / 2)
+    sas_alpha_value = Settings.ALPHA_VALUE / math.log2(src.global_var.MAX_MACHINES - 1)
 
     loc_res = izgbs(
-        location_data['NUM_MACHINES'],
+        src.global_var.MAX_MACHINES,
         start_val,
         Settings.MIN_ALLOC,
         sas_alpha_value,
@@ -37,7 +39,7 @@ def evaluate_location(location_data: dict) -> dict:
         machines_value = []
         for result in loc_feas:
             machines_value.append(result['Machines'])
-        
+
         # find fewest feasible machines
         mach_min = min(machines_value)
 
@@ -49,11 +51,11 @@ def evaluate_location(location_data: dict) -> dict:
                 break
 
         # populate overall results with info for this location
-        
+
         best_result['Resource'] = mach_min
         best_result['Exp. Avg. Wait Time'] = loc_feas_min['BatchAvg']
         best_result['Exp. Max. Wait Time'] = loc_feas_min['BatchMaxAvg']
-        
+
     else:
         # no feasible setups, find lowest wait time (should work out to be max machines allowed)
         max_avg = []

@@ -77,9 +77,6 @@ if __name__ == '__main__':
 
     start_time = time.perf_counter()
 
-    for location in location_data.values():
-        location['NUM_MACHINES'] = Settings.MAX_MACHINES
-
     results = apportionment(location_data)
 
     pprint(results)
