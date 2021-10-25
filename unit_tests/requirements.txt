@@ -1,0 +1,10 @@
+pytest
+simpy
+xlrd==1.2.0
+pandas
+numpy
+scipy
+coverage
+pytest-cov
+pytest-mock
+jit
