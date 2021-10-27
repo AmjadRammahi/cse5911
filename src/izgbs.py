@@ -3,7 +3,6 @@ import logging
 import numpy as np
 import scipy.stats as st
 from statistics import mean
-from src.settings import Settings
 from src.voter_sim import voter_sim
 import src.global_var
 
@@ -83,7 +82,6 @@ def izgbs(
     max_voters = location_data['Eligible Voters']
     expected_voters = location_data['Likely or Exp. Voters']
     ballot_length = location_data['Ballot Length Measure']
-    arrival_rt = location_data['Arrival Mean']
 
     # calculate voting times
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
@@ -125,7 +123,6 @@ def izgbs(
                 vote_time_min=vote_min,
                 vote_time_mode=vote_mode,
                 vote_time_max=vote_max,
-                arrival_rt=arrival_rt,
                 num_machines=num_machines
             )
 

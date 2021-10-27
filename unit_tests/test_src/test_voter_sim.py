@@ -34,7 +34,6 @@ def test_voter_sim_many_machines():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        arrival_rt=0.01,
         num_machines=100
     )
     # assert - checking that the wait times are all 0.0 if num_machines == num_voters
@@ -53,7 +52,6 @@ def test_voter_sim_non_zero_wait_times():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        arrival_rt=0.01,
         num_machines=1
     )
     # assert - checking that the wait times are not all 0.0 if num_machines << num_voters
@@ -68,7 +66,6 @@ def test_voter_sim_zero_initial_wait_time():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        arrival_rt=0.01,
         num_machines=1
     )
     # assert - checking that the first wait time is zero
@@ -84,7 +81,6 @@ def test_voter_sim_zero_machines_raises():
             vote_time_min=1,
             vote_time_mode=2,
             vote_time_max=3,
-            arrival_rt=0.01,
             num_machines=0
         )
 
@@ -105,7 +101,6 @@ def test_voter_sim_near_expected_should_vote():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        arrival_rt=100 / 13 / 60,
         num_machines=10
     )
     # assert - the number of actual voters should be near (+-!0%) the number of
@@ -191,16 +186,16 @@ def test_generate_voter_random_arrival_2():
         "Observed average arrival times do not match expected random arrival times."
 
 
-# def test_voter_sim_usual_usage_1():
-#     _min, _mode, _max = voting_time_calcs(5)
-#     # act
-#     wait_times = voter_sim(
-#         max_voters=914,
-#         vote_time_min=_min,
-#         vote_time_mode=_mode,
-#         vote_time_max=_max,
-#         arrival_rt=914 / 13 / 60,
-#         num_machines=7
-#     )
-#     # assert
-#     assert mean(wait_times) == 1.0
+def test_voter_sim_total_voters_must_not_exceed_max():
+    max_voters = 1
+    wait_times = voter_sim(
+        max_voters=max_voters,
+        expected_voters=max_voters*10,
+        vote_time_min=1,
+        vote_time_mode=2,
+        vote_time_max=3,
+        num_machines=1
+    )
+    # assert - total number of voters should never exceed the maximum number of
+    # registered voters
+    assert len(wait_times) <= max_voters
