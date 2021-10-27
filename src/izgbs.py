@@ -86,15 +86,11 @@ def izgbs(
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
 
     # create a dataframe for total number of machines
-    feasible_dict = {
-        num_m + 1: {
-            'Machines': num_m + 1,
-            'Feasible': 0,
-            'BatchAvg': 0,
-            'BatchMaxAvg': 0
-        }
-        for num_m in range(max_machines)
-    }
+    feasible_array = np.zeros((max_machines, 4))
+
+    for i in range(max_machines):
+        feasible_array[i][0] = i + 1
+
 
     # start with the start value specified
     hypotheses_remain = True
@@ -164,9 +160,7 @@ def izgbs(
             else:
                 #index_list = feasible_dict.keys()
                 # move to upper half
-                feasible_array[:,1][feasible_array[:,0] == num_machines] = 1
-                # move to upper half
-                feasible_dict[num_machines]['Feasible'] = 0
+                feasible_array[:,1][feasible_array[:,0] == num_machines] = 0
                 cur_lower = num_machines
                 num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
         else:
