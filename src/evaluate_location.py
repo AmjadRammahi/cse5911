@@ -9,6 +9,7 @@ import numpy as np
 
 
 
+
 def evaluate_location(location_data: dict) -> dict:
 
     '''
