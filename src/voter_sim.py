@@ -2,7 +2,7 @@ import simpy
 import logging
 import numpy as np
 from random import expovariate
-from numba import njit
+from numba import jit
 from src.settings import Settings
 
 

@@ -33,6 +33,7 @@ def evaluate_location(location_data: dict) -> dict:
 
     loc_feas = loc_res[loc_res[:,1] == 1]
     
+    
     if loc_feas.size != 0:
         loc_feas_min = loc_feas[0]
 

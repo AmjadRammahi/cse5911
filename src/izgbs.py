@@ -53,6 +53,11 @@ def voting_time_calcs(ballot_length: int) -> tuple:
 
     return vote_min, vote_mode, vote_max
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> bbd476385484410ec47d8c98ebbe125d2f77f601
 
 def izgbs(
     max_machines: int,
@@ -86,10 +91,10 @@ def izgbs(
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
 
     # create a dataframe for total number of machines
-    feasible_array = np.zeros((max_machines, 4))
+    feasible_list = np.zeros((max_machines, 4))
 
     for i in range(max_machines):
-        feasible_array[i][0] = i + 1
+        feasible_list[i][0] = i + 1
 
 
     # start with the start value specified
@@ -143,8 +148,9 @@ def izgbs(
         max_wait_time_std = np.std(max_wait_times)
 
         # populate results
-        feasible_array[:,2][feasible_array[:,0] == num_machines] = avg_wait_time_avg
-        feasible_array[:,3][feasible_array[:,0] == num_machines] = max_wait_time_avg
+        # populate results
+        feasible_list[:,2][feasible_list[:,0] == num_machines] = avg_wait_time_avg
+        feasible_list[:,3][feasible_list[:,0] == num_machines] = max_wait_time_avg
 
         # calculate test statistic (p)
         if max_wait_time_std > 0:  # NOTE: > 0, avoiding divide by 0 error

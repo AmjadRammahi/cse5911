@@ -1,11 +1,12 @@
+from pprint import pprint
 import xlrd
 import math
 import time
 import logging
 import argparse
 import warnings
+from numba import jit
 from tqdm import tqdm
-from pprint import pprint
 from multiprocessing import Pool
 from typing import List, Union, Optional
 
@@ -79,8 +80,6 @@ if __name__ == '__main__':
     start_time = time.perf_counter()
 
     results = apportionment(location_data)
-
     pprint(results)
-
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')
