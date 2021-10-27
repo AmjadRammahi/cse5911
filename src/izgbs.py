@@ -53,11 +53,6 @@ def voting_time_calcs(ballot_length: int) -> tuple:
 
     return vote_min, vote_mode, vote_max
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> bbd476385484410ec47d8c98ebbe125d2f77f601
 
 def izgbs(
     max_machines: int,
@@ -160,24 +155,24 @@ def izgbs(
             if p < sas_alpha_value:
                 # move to lower half
                 #index_list = feasible_dict.keys()
-                feasible_array[:,1][feasible_array[:,0] >= num_machines] = 1
+                feasible_list[:,1][feasible_list[:,0] >= num_machines] = 1
                 cur_upper = num_machines
                 num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
                 #index_list = feasible_dict.keys()
                 # move to upper half
-                feasible_array[:,1][feasible_array[:,0] == num_machines] = 0
+                feasible_list[:,1][feasible_list[:,0] == num_machines] = 0
                 cur_lower = num_machines
                 num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
         else:
             # move to lower half
             # index_list = feasible_dict.keys()
-            feasible_array[:,1][feasible_array[:,0] >= num_machines] = 1
+            feasible_list[:,1][feasible_list[:,0] >= num_machines] = 1
             cur_upper = num_machines
             num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 
         # check if there are hypotheses left to test
         hypotheses_remain = cur_lower < cur_upper and cur_lower < num_machines < cur_upper
     
-    logging.info(feasible_array)
-    return feasible_array
+    logging.info(feasible_list)
+    return feasible_list
