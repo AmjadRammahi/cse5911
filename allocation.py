@@ -42,31 +42,45 @@ if __name__ == '__main__':
     # =========================================================================
     # Main
 
-    total_machines_available = 120
-    acceptable_resource_miss = 10
+    # NOTE/TODO: use a binary search on the service_req to keep wait times uniform
+    # NOTE: rerun final service_req 2 or more times for guarantee
 
-    upper_service_req = 500
-    lower_service_req = 1
-    current_total = 0
-    num_iterations = 0
+    total_machines_available = 50
 
-    while num_iterations < 20 and \
-            abs(total_machines_available - current_total) > acceptable_resource_miss:
-        # next service req to try
-        current_service_req = (upper_service_req + lower_service_req) * 0.5
+    for location in location_data.values():
+        location['NUM_MACHINES'] = Settings.MAX_MACHINES
 
-        # running apportionment on all locations
-        logging.critical(f'allocation - running apportionment with service req: {current_service_req:.2f}')
-        results = apportionment(location_data, current_service_req)
+    apportionment_results = apportionment(location_data)
+    current_total_machines = sum(x['Resource'] for x in apportionment_results.values())
 
-        # collecting new total
-        current_total = sum(res['Resource'] for res in results.values())
+    if current_total_machines > total_machines_available:
+        # subtract machines proportionally such that the new sum is the total_machines_available
+        for i, location in enumerate(location_data.values()):
+            location['NUM_MACHINES'] = int(
+                apportionment_results[i + 1]['Resource'] /
+                current_total_machines *
+                total_machines_available
+            )
 
-        # updating upper or lower bound
-        if total_machines_available > current_total:
-            upper_service_req = current_service_req
-        else:
-            lower_service_req = current_service_req
+        # rerun apportionment to get new times
+        apportionment_results = apportionment(location_data)
+        current_total_machines = sum(x['Resource'] for x in apportionment_results.values())
 
-    # NOTE: could rerun final service_req 2 or more times here for guarantee
-    pprint(results)
+        # round robin increment resources for those with highest wait times
+        ordered = sorted(
+            [(i, location['Exp. Max. Wait Time'])
+             for i, location in apportionment_results.items()
+             ],
+            key=lambda x: x[1]
+        )
+        curr = 0
+
+        while current_total_machines < total_machines_available:
+            if curr == len(apportionment_results):
+                curr = 0
+
+            apportionment_results[ordered[curr][0]]['Resource'] += 1
+            current_total_machines += 1
+            curr += 1
+
+    pprint(apportionment_results)
