@@ -1,14 +1,10 @@
 import math
 import logging
 from pprint import pprint
-
 import src.global_var
 from src.settings import Settings
 from src.izgbs import izgbs
 import numpy as np
-
-
-
 
 def evaluate_location(location_data: dict) -> dict:
 
@@ -35,7 +31,6 @@ def evaluate_location(location_data: dict) -> dict:
         location_data[1]
     )
 
-
     loc_feas = loc_res[loc_res[:,1] == 1]
     
     if loc_feas.size != 0:
@@ -45,7 +40,6 @@ def evaluate_location(location_data: dict) -> dict:
         # populate overall results with info for this location
         best_result = np.delete(loc_feas_min, 1)
         
-
     else:
         # not reachable
         print(loc_res[loc_res[:,3]])
