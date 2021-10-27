@@ -53,31 +53,14 @@ def voting_time_calcs(ballot_length: int) -> tuple:
 
     return vote_min, vote_mode, vote_max
 
-def create_hypotheses_df(num_h):
-    '''
-        This function creates a dataframe to store hypotheses testing results.
-        Params:
-            num_h () : TODO.
-        Returns:
-            TODO
-    '''
-    
-    hyp_results = np.zeros((num_h, 4))
-    
-    for i in range(num_h):
-        hyp_results[i][0] = i+1
-    
-    i = 0
-    
-
-    return hyp_results
 
 def izgbs(
     max_machines: int,
     start_machines: int,
     min_machines: int,
     sas_alpha_value: float,
-    location_data: dict
+    location_data: dict,
+    service_req: float
 ):
     '''
         Main IZGBS function.
@@ -87,12 +70,15 @@ def izgbs(
             start_machines (int) : starting number of machines to test,
             min_machines (int) : minimum allowed number of machines,
             sas_alpha_value (float) : TODO,
-            location_data (list) : location data.
+            location_data (list) : location data,
+            service_req (float) max service requirement.
+
         Returns:
             (pd.DataFrame) : feasability of each resource amt.
     '''
     # read in parameters from locations dataframe
     max_voters = location_data['Eligible Voters']
+    expected_voters = location_data['Likely or Exp. Voters']
     ballot_length = location_data['Ballot Length Measure']
     arrival_rt = location_data['Arrival Mean']
 
@@ -100,7 +86,15 @@ def izgbs(
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
 
     # create a dataframe for total number of machines
-    feasible_array = create_hypotheses_df(max_machines)
+    feasible_dict = {
+        num_m + 1: {
+            'Machines': num_m + 1,
+            'Feasible': 0,
+            'BatchAvg': 0,
+            'BatchMaxAvg': 0
+        }
+        for num_m in range(max_machines)
+    }
 
     # start with the start value specified
     hypotheses_remain = True
@@ -124,6 +118,7 @@ def izgbs(
             # calculate voting times
             wait_times = voter_sim(
                 max_voters=max_voters,
+                expected_voters=expected_voters,
                 vote_time_min=vote_min,
                 vote_time_mode=vote_mode,
                 vote_time_max=vote_max,
@@ -157,7 +152,7 @@ def izgbs(
 
         # calculate test statistic (p)
         if max_wait_time_std > 0:  # NOTE: > 0, avoiding divide by 0 error
-            z = (max_wait_time_avg - src.global_var.SERVICE_REQ + src.global_var.DELTA_INDIFFERENCE_ZONE) / (max_wait_time_std / math.sqrt(src.global_var.NUM_BATCHES))
+            z = (max_wait_time_avg - service_req + src.global_var.DELTA_INDIFFERENCE_ZONE) / (max_wait_time_std / math.sqrt(src.global_var.NUM_BATCHES))
             p = st.norm.cdf(z)
 
             if p < sas_alpha_value:
