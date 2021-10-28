@@ -59,7 +59,7 @@ def izgbs(
     start_machines: int,
     min_machines: int,
     sas_alpha_value: float,
-    location_data: dict,
+    location_data: list,
     service_req: float
 ):
     '''
@@ -76,16 +76,16 @@ def izgbs(
         Returns:
             (pd.DataFrame) : feasability of each resource amt.
     '''
-    # read in parameters from locations dataframe
-    max_voters = location_data['Eligible Voters']
-    expected_voters = location_data['Likely or Exp. Voters']
-    ballot_length = location_data['Ballot Length Measure']
-    arrival_rt = location_data['Arrival Mean']
-
+    # read in parameters from locations array
+    
+    max_voters = location_data[1]
+    expected_voters = location_data[0]
+    ballot_length = location_data[2]
+    arrival_rt = location_data[3]
     # calculate voting times
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
 
-    # create a dataframe for total number of machines
+    # create a numpy array for total number of machines
     feasible_list = np.zeros((max_machines, 4))
 
     for i in range(max_machines):
@@ -143,7 +143,6 @@ def izgbs(
         max_wait_time_std = np.std(max_wait_times)
 
         # populate results
-        # populate results
         feasible_list[:,2][feasible_list[:,0] == num_machines] = avg_wait_time_avg
         feasible_list[:,3][feasible_list[:,0] == num_machines] = max_wait_time_avg
 
@@ -154,20 +153,14 @@ def izgbs(
 
             if p < sas_alpha_value:
                 # move to lower half
-                #index_list = feasible_dict.keys()
                 feasible_list[:,1][feasible_list[:,0] >= num_machines] = 1
                 cur_upper = num_machines
                 num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
-                #index_list = feasible_dict.keys()
-                # move to upper half
-                feasible_list[:,1][feasible_list[:,0] == num_machines] = 0
+                
                 cur_lower = num_machines
                 num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
         else:
-            # move to lower half
-            # index_list = feasible_dict.keys()
-            feasible_list[:,1][feasible_list[:,0] >= num_machines] = 1
             cur_upper = num_machines
             num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 

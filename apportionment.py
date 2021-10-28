@@ -1,4 +1,5 @@
 from pprint import pprint
+from numpy import array
 import xlrd
 import math
 import time
@@ -9,7 +10,6 @@ from numba import jit
 from tqdm import tqdm
 from multiprocessing import Pool
 from typing import List, Union, Optional
-
 import src.global_var
 from src.settings import Settings
 from src.util import set_logging_level
@@ -30,12 +30,12 @@ parser.add_argument(
 )
 
 
-def apportionment(location_data: dict, service_req: float = src.global_var.SERVICE_REQ) -> dict:
+def apportionment(location_data: array, service_req: float = src.global_var.SERVICE_REQ) -> dict:
     '''
         Runs apportionment against the given locations.
 
         Params:
-            location_data (dict) :
+            location_data (numpy array) :
                 contains the amt of voters and the ballot length for each location,
             service_req (float) : max service requirement.
 
@@ -43,16 +43,16 @@ def apportionment(location_data: dict, service_req: float = src.global_var.SERVI
             (dict) : locations with the min feasible
                 resource number and BatchAvg/BatchMaxAvg wait time.
     '''
-    # NOTE: locations start at 1, not 0
+    
     location_params = [
-        (location_data[i + 1], service_req)
+        (location_data[i], service_req)
         for i in range(Settings.NUM_LOCATIONS)
     ]
 
     pool = Pool()
 
     return {
-        i + 1: result
+        i : result
         for i, result in enumerate(tqdm(
             pool.imap(evaluate_location, location_params),
             total=len(location_params)
