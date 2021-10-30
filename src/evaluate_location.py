@@ -1,8 +1,6 @@
 import math
-import logging
 from pprint import pprint
 
-import src.global_var
 from src.settings import Settings
 from src.izgbs import izgbs
 
@@ -19,11 +17,11 @@ def evaluate_location(location_data: dict) -> dict:
     '''
     best_result = {}
 
-    start_val = math.ceil((src.global_var.MAX_MACHINES - 1) / 2)
-    sas_alpha_value = Settings.ALPHA_VALUE / math.log2(src.global_var.MAX_MACHINES - 1)
+    start_val = math.ceil((Settings.MAX_MACHINES - 1) / 2)
+    sas_alpha_value = Settings.ALPHA_VALUE / math.log2(Settings.MAX_MACHINES - 1)
 
     loc_res = izgbs(
-        src.global_var.MAX_MACHINES,
+        Settings.MAX_MACHINES,
         start_val,
         Settings.MIN_ALLOC,
         sas_alpha_value,
@@ -64,7 +62,6 @@ def evaluate_location(location_data: dict) -> dict:
         for key, result in loc_res.items():
             max_avg.append(result['BatchMaxAvg'])
             min_index = key
-        wait_time_min = min(max_avg)
 
         loc_res_min = loc_res[min_index]
 

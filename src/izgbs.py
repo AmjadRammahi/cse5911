@@ -3,8 +3,8 @@ import logging
 import numpy as np
 import scipy.stats as st
 from statistics import mean
+from src.settings import Settings
 from src.voter_sim import voter_sim
-import src.global_var
 
 
 def voting_time_calcs(ballot_length: int) -> tuple:
@@ -19,15 +19,15 @@ def voting_time_calcs(ballot_length: int) -> tuple:
             (float) : vote time mode,
             (float) : vote time max.
     '''
-    min_voting_min = src.global_var.MIN_VOTING_MIN
-    min_voting_mode = src.global_var.MIN_VOTING_MODE
-    min_voting_max = src.global_var.MIN_VOTING_MAX
-    min_ballot = src.global_var.MIN_BALLOT
+    min_voting_min = Settings.MIN_VOTING_MIN
+    min_voting_mode = Settings.MIN_VOTING_MODE
+    min_voting_max = Settings.MIN_VOTING_MAX
+    min_ballot = Settings.MIN_BALLOT
 
-    max_voting_min = src.global_var.MAX_VOTING_MIN
-    max_voting_mode = src.global_var.MAX_VOTING_MODE
-    max_voting_max = src.global_var.MAX_VOTING_MAX
-    max_ballot = src.global_var.MAX_BALLOT
+    max_voting_min = Settings.MAX_VOTING_MIN
+    max_voting_mode = Settings.MAX_VOTING_MODE
+    max_voting_max = Settings.MAX_VOTING_MAX
+    max_ballot = Settings.MAX_BALLOT
 
     # VotingProcessingMin = MinVotingProcessingMin + (MaxVotingProcessingMin - MinVotingProcessingMin) / (MaxBallot - MinBallot) * (Ballot - MinBallot)
     # VotingProcessingMode = MinVotingProcessingMode + (MaxVotingProcessingMode - MinVotingProcessingMode) / (MaxBallot - MinBallot) * (Ballot - MinBallot)
@@ -108,14 +108,14 @@ def izgbs(
         logging.info(f'Current lower bound: {cur_lower}')
         logging.info(f'\tTesting with: {num_machines}')
 
-        batch_avg_wait_times = [[] for _ in range(src.global_var.NUM_BATCHES)]
-        batch_max_wait_times = [[] for _ in range(src.global_var.NUM_BATCHES)]
+        batch_avg_wait_times = [[] for _ in range(Settings.NUM_BATCHES)]
+        batch_max_wait_times = [[] for _ in range(Settings.NUM_BATCHES)]
 
         # =====================================
 
         # TODO: use AKPI
 
-        for i in range(src.global_var.NUM_REPLICATIONS):
+        for i in range(Settings.NUM_REPLICATIONS):
             # calculate voting times
             wait_times = voter_sim(
                 max_voters=max_voters,
@@ -126,8 +126,8 @@ def izgbs(
                 num_machines=num_machines
             )
 
-            batch_avg_wait_times[i % src.global_var.NUM_BATCHES].append(mean(wait_times))
-            batch_max_wait_times[i % src.global_var.NUM_BATCHES].append(max(wait_times))
+            batch_avg_wait_times[i % Settings.NUM_BATCHES].append(mean(wait_times))
+            batch_max_wait_times[i % Settings.NUM_BATCHES].append(max(wait_times))
 
         # =====================================
 
@@ -152,7 +152,7 @@ def izgbs(
 
         # calculate test statistic (p)
         if max_wait_time_std > 0:  # NOTE: > 0, avoiding divide by 0 error
-            z = (max_wait_time_avg - service_req + src.global_var.DELTA_INDIFFERENCE_ZONE) / (max_wait_time_std / math.sqrt(src.global_var.NUM_BATCHES))
+            z = (max_wait_time_avg - service_req + Settings.DELTA_INDIFFERENCE_ZONE) / (max_wait_time_std / math.sqrt(Settings.NUM_BATCHES))
             p = st.norm.cdf(z)
 
             if p < sas_alpha_value:
