@@ -1,16 +1,12 @@
 import xlrd
-import math
 import time
 import logging
 import argparse
-import warnings
-
+import multiprocessing
 from tqdm import tqdm
 from pprint import pprint
 from multiprocessing import Pool
-from typing import List, Union, Optional
 
-import src.global_var
 from src.settings import Settings
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
@@ -20,7 +16,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     'input_xlsx',
     type=str,
-    help='first positional argument, input xlsx filepath'
+    default='voting_excel.xlsx',
+    help='first positional argument, input xlsx filepath',
+    nargs='?'
 )
 parser.add_argument(
     '--log',
@@ -30,7 +28,7 @@ parser.add_argument(
 )
 
 
-def apportionment(location_data: dict, service_req: float = src.global_var.SERVICE_REQ) -> dict:
+def apportionment(location_data: dict, service_req: float = Settings.SERVICE_REQ) -> dict:
     '''
         Runs apportionment against the given locations.
 
@@ -61,6 +59,7 @@ def apportionment(location_data: dict, service_req: float = src.global_var.SERVI
 
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support()
     args = parser.parse_args()
 
     set_logging_level(args.log)
@@ -85,3 +84,4 @@ if __name__ == '__main__':
 
     logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.critical('Done.')
+    input("Press enter to exit.")

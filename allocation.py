@@ -3,7 +3,6 @@ import logging
 import argparse
 from pprint import pprint
 
-import src.global_var
 from src.settings import Settings
 from apportionment import apportionment
 from src.util import set_logging_level
@@ -31,7 +30,6 @@ if __name__ == '__main__':
     # =========================================================================
     # Setup
 
-    Settings
 
     logging.info(f'reading {args.input_xlsx}')
     voting_config = xlrd.open_workbook(args.input_xlsx)
