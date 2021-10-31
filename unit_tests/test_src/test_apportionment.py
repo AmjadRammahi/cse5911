@@ -7,9 +7,8 @@ from apportionment import apportionment
 # test does not validate results).
 def test_apportion_no_error():
     Settings.BATCH_SIZE = 1
-    # Note: setting replications < 3 will cause the test to fail at line #136
-    # in src/izgbs.py
     Settings.NUM_REPLICATIONS = 3
+    Settings.NUM_BATCHES = 3 // 1
     Settings.NUM_LOCATIONS = 1
     # Set-up simple location_data object
     location_data = {
