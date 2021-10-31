@@ -62,7 +62,7 @@ def izgbs(
     sas_alpha_value: float,
     location_data: dict,
     service_req: float
-):
+) -> dict:
     '''
         Main IZGBS function.
 
@@ -76,7 +76,7 @@ def izgbs(
             service_req (float) max service requirement.
 
         Returns:
-            (pd.DataFrame) : feasability of each resource amt.
+            (dict) : feasability of each resource amount.
     '''
     # read in parameters from locations dataframe
     max_voters = location_data['Eligible Voters']
@@ -94,7 +94,7 @@ def izgbs(
             'BatchAvg': 0,
             'BatchMaxAvg': 0
         }
-        for num_m in range(max_machines)
+        for num_m in range(min_machines, max_machines)
     }
 
     # start with the start value specified

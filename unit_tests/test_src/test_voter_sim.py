@@ -130,7 +130,7 @@ def test_generate_voter_random_arrival():
         # Because SimPy adds voters one at a time the arrival time of any
         # given voter is equal to the randomly generated time plus the arrival
         # time of the previous voter.
-        arrival_times.append(arrival_times[i-1] + VotingLocation.generate_voter(location))
+        arrival_times.append(arrival_times[i - 1] + VotingLocation.generate_voter(location))
     # Arrival times should be randomly distributed, therefore the average
     # arrival time should be in the middle of poll's hours of operation.
     optimal_avg_arrival = sim_time / 2
@@ -170,7 +170,7 @@ def test_generate_voter_random_arrival_2():
         # Because SimPy adds voters one at a time the arrival time of any
         # given voter is equal to the randomly generated time plus the arrival
         # time of the previous voter.
-        arrival_times.append(arrival_times[i-1] + VotingLocation.generate_voter(location))
+        arrival_times.append(arrival_times[i - 1] + VotingLocation.generate_voter(location))
     # Arrival times should be randomly distributed, therefore the average
     # arrival time should be in the middle of poll's hours of operation.
     optimal_avg_arrival = sim_time / 2
@@ -190,7 +190,7 @@ def test_voter_sim_total_voters_must_not_exceed_max():
     max_voters = 1
     wait_times = voter_sim(
         max_voters=max_voters,
-        expected_voters=max_voters*10,
+        expected_voters=max_voters * 10,
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,

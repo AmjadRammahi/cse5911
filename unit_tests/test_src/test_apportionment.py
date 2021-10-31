@@ -1,5 +1,5 @@
 import pytest
-from src.settings import Settings
+from src.settings import Settings, reset_settings
 from apportionment import apportionment
 
 
@@ -21,3 +21,4 @@ def test_apportion_no_error():
     # No assertion needed, test will fail if and only if apportionment throws
     # an error
     apportionment(location_data)
+    reset_settings()

@@ -1,4 +1,5 @@
 import xlrd
+import time
 import logging
 import argparse
 from pprint import pprint
@@ -20,28 +21,32 @@ parser.add_argument(
     default='info',
     help='log level, ex: --log debug'
 )
+parser.add_argument(
+    '--machines',
+    type=int,
+    default=100,
+    help='number of machines'
+)
 
 
-if __name__ == '__main__':
-    args = parser.parse_args()
+def allocation(
+    location_data: dict,
+    total_machines_available: int,
+    acceptable_resource_miss: int
+) -> dict:
+    '''
+        Main function for Allocation.
+        Makes use of apportionment to keep service reqs close.
 
-    set_logging_level(args.log)
+        Params:
+            location_data (dict) : location data from xlsx,
+            total_machines_available (int) : number of machines allowed to be allocated,
+            acceptable_resource_miss (int) : number of resources allowed to be un-used.
 
-    # =========================================================================
-    # Setup
-
-
-    logging.info(f'reading {args.input_xlsx}')
-    voting_config = xlrd.open_workbook(args.input_xlsx)
-
-    # get voting location data from input xlsx file
-    location_data = fetch_location_data(voting_config)
-
-    # =========================================================================
-    # Main
-
-    total_machines_available = 120
-    acceptable_resource_miss = 10
+        Returns:
+            (dict) : allocation results by location with expected wait times.
+    '''
+    print(f'allocation - machines available: {total_machines_available}')
 
     upper_service_req = 500
     lower_service_req = 1
@@ -59,6 +64,7 @@ if __name__ == '__main__':
 
         # collecting new total
         current_total = sum(res['Resource'] for res in results.values())
+        logging.critical(f'allocation - used {current_total} machines at service req: {current_service_req:.2f}')
 
         # updating upper or lower bound
         if total_machines_available > current_total:
@@ -67,4 +73,37 @@ if __name__ == '__main__':
             lower_service_req = current_service_req
 
     # NOTE: could rerun final service_req 2 or more times here for guarantee
-    pprint(results)
+    return results
+
+
+if __name__ == '__main__':
+    args = parser.parse_args()
+
+    set_logging_level(args.log)
+
+    # =========================================================================
+    # Setup
+
+    logging.info(f'reading {args.input_xlsx}')
+    voting_config = xlrd.open_workbook(args.input_xlsx)
+
+    # get voting location data from input xlsx file
+    location_data = fetch_location_data(voting_config)
+
+    # =========================================================================
+    # Main
+
+    total_machines_available = args.machines
+    acceptable_resource_miss = 10
+
+    start_time = time.perf_counter()
+
+    pprint(
+        allocation(
+            location_data,
+            total_machines_available,
+            acceptable_resource_miss
+        )
+    )
+
+    print(f'elapsed time: {time.perf_counter() - start_time}')
