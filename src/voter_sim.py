@@ -162,7 +162,6 @@ def voter_sim(
         vote_time_min: float,
         vote_time_mode: float,
         vote_time_max: float,
-        arrival_rt: float,
         num_machines: int
 ) -> list:
     '''
@@ -174,7 +173,6 @@ def voter_sim(
             vote_time_min (float) : min voting time,
             vote_time_mode (float) : mode voting time,
             vote_time_max (float) : max voting time,
-            arrival_rt (float) : arrival mean,
             num_machines (int) : number of voting machines at the location.
 
         Returns:

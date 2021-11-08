@@ -61,3 +61,35 @@ class Settings:
     MIN_ALLOC = 1
 
     NUM_LOCATIONS = 5
+
+
+def reset_settings():
+    Settings.POLL_START = 6.5
+    Settings.POLL_END = 19.5
+    Settings.POLL_OPEN = Settings.POLL_END - Settings.POLL_START
+
+    Settings.BATCH_SIZE = 2
+    Settings.NUM_REPLICATIONS = 10
+    Settings.NUM_BATCHES = Settings.NUM_REPLICATIONS // Settings.BATCH_SIZE
+
+    Settings.MIN_VOTING_MIN = 6
+    Settings.MIN_VOTING_MODE = 8
+    Settings.MIN_VOTING_MAX = 12
+    Settings.MIN_BALLOT = 0
+
+    Settings.MAX_VOTING_MIN = 6
+    Settings.MAX_VOTING_MODE = 10
+    Settings.MAX_VOTING_MAX = 20
+    Settings.MAX_BALLOT = 10
+
+    Settings.SERVICE_REQ = 30.0
+
+    Settings.MAX_MACHINES = 200
+
+    Settings.ALPHA_VALUE = 0.05
+    Settings.DELTA_INDIFFERENCE_ZONE = 0.5
+
+    Settings.MIN_ALLOC_FLG = 1
+    Settings.MIN_ALLOC = 1
+
+    Settings.NUM_LOCATIONS = 5

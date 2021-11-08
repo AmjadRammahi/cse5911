@@ -28,10 +28,16 @@ def fetch_location_data(voting_config: Book) -> list:
         if i == 0:
             continue
 
+<<<<<<< HEAD
         data = np.append(data, np.array([location_sheet.row_values(i)[1:]]), axis=0) # [1:] drops ID column
         arrival_mean_list.append(data[i - 1][0] / Settings.POLL_OPEN / 60)
             
     arrival_mean = np.array(arrival_mean_list)
     location_data = np.concatenate((data, arrival_mean[:,None]),axis=1)
     
+=======
+        data = map(int, location_sheet.row_values(i)[1:])  # [1:] drops ID column
+        location_data[i] = dict(zip(COLUMN_NAMES, data))
+
+>>>>>>> main
     return location_data
