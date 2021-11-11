@@ -36,8 +36,8 @@ class Settings:
     POLL_END = 19.5  # 7:30 pm
     POLL_OPEN = POLL_END - POLL_START
 
-    BATCH_SIZE = 2
-    NUM_REPLICATIONS = 10
+    BATCH_SIZE = 4
+    NUM_REPLICATIONS = 20
     NUM_BATCHES = NUM_REPLICATIONS // BATCH_SIZE
 
     MIN_VOTING_MIN = 6
@@ -60,7 +60,7 @@ class Settings:
     MIN_ALLOC_FLG = 1  # is minimum allocation requirement
     MIN_ALLOC = 1
 
-    NUM_LOCATIONS = 5
+    NUM_LOCATIONS = 532
 
 
 def reset_settings():

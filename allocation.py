@@ -72,6 +72,8 @@ def allocation(
         else:
             lower_service_req = current_service_req
 
+        num_iterations += 1
+
     # NOTE: could rerun final service_req 2 or more times here for guarantee
     return results
 
