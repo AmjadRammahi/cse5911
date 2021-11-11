@@ -4,20 +4,9 @@ import xlrd
 import time
 import logging
 import argparse
-<<<<<<< HEAD
-import warnings
-from numba import jit
-=======
 import multiprocessing
->>>>>>> main
 from tqdm import tqdm
 from multiprocessing import Pool
-<<<<<<< HEAD
-from typing import List, Union, Optional
-import src.global_var
-=======
-
->>>>>>> main
 from src.settings import Settings
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
@@ -39,11 +28,7 @@ parser.add_argument(
 )
 
 
-<<<<<<< HEAD
-def apportionment(location_data: array, service_req: float = src.global_var.SERVICE_REQ) -> dict:
-=======
 def apportionment(location_data: dict, service_req: float = Settings.SERVICE_REQ) -> dict:
->>>>>>> main
     '''
         Runs apportionment against the given locations.
 
@@ -58,14 +43,14 @@ def apportionment(location_data: dict, service_req: float = Settings.SERVICE_REQ
     '''
     
     location_params = [
-        (location_data[i], service_req)
+        (location_data[i + 1], service_req)
         for i in range(Settings.NUM_LOCATIONS)
     ]
 
     pool = Pool()
 
     return {
-        i : result
+        i + 1 : result
         for i, result in enumerate(tqdm(
             pool.imap(evaluate_location, location_params),
             total=len(location_params)

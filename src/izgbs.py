@@ -58,7 +58,7 @@ def izgbs(
     start_machines: int,
     min_machines: int,
     sas_alpha_value: float,
-    location_data: list,
+    location_data: dict,
     service_req: float
 ) -> dict:
     '''
@@ -71,27 +71,9 @@ def izgbs(
             sas_alpha_value (float) : TODO,
             location_data (list) : location data,
             service_req (float) max service requirement.
-
         Returns:
             (dict) : feasability of each resource amount.
     '''
-<<<<<<< HEAD
-    # read in parameters from locations array
-    
-    max_voters = location_data[1]
-    expected_voters = location_data[0]
-    ballot_length = location_data[2]
-    arrival_rt = location_data[3]
-    # calculate voting times
-    vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length)
-
-    # create a numpy array for total number of machines
-    feasible_list = np.zeros((max_machines, 4))
-
-    for i in range(max_machines):
-        feasible_list[i][0] = i + 1
-
-=======
     # read in parameters from locations dataframe
     max_voters = location_data['Eligible Voters']
     expected_voters = location_data['Likely or Exp. Voters']
@@ -110,7 +92,6 @@ def izgbs(
         }
         for num_m in range(min_machines, max_machines)
     }
->>>>>>> main
 
     # start with the start value specified
     hypotheses_remain = True
@@ -140,10 +121,10 @@ def izgbs(
                 vote_time_max=vote_max,
                 num_machines=num_machines
             )
+            
 
             batch_avg_wait_times[i % Settings.NUM_BATCHES].append(mean(wait_times))
             batch_max_wait_times[i % Settings.NUM_BATCHES].append(max(wait_times))
-
         # =====================================
 
         # reduce individual batches to their mean's
@@ -162,8 +143,8 @@ def izgbs(
         max_wait_time_std = np.std(max_wait_times)
 
         # populate results
-        feasible_list[:,2][feasible_list[:,0] == num_machines] = avg_wait_time_avg
-        feasible_list[:,3][feasible_list[:,0] == num_machines] = max_wait_time_avg
+        feasible_dict[num_machines]['BatchAvg'] = avg_wait_time_avg
+        feasible_dict[num_machines]['BatchMaxAvg'] = max_wait_time_avg
 
         # calculate test statistic (p)
         if max_wait_time_std > 0:  # NOTE: > 0, avoiding divide by 0 error
@@ -172,19 +153,27 @@ def izgbs(
 
             if p < sas_alpha_value:
                 # move to lower half
-                feasible_list[:,1][feasible_list[:,0] >= num_machines] = 1
+
+                for key in feasible_dict:
+                    if key >= num_machines:
+                        feasible_dict[key]['Feasible'] = 1
+
                 cur_upper = num_machines
                 num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
-                
+                # move to upper half
+                feasible_dict[num_machines]['Feasible'] = 0
                 cur_lower = num_machines
                 num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
         else:
+            # move to lower half
+            feasible_dict[num_machines]['Feasible'] = 0
             cur_upper = num_machines
             num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 
         # check if there are hypotheses left to test
         hypotheses_remain = cur_lower < cur_upper and cur_lower < num_machines < cur_upper
-    
-    logging.info(feasible_list)
-    return feasible_list
+
+    logging.info(feasible_dict)
+
+    return feasible_dict

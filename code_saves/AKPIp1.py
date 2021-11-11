@@ -17,7 +17,6 @@ def AKPIp1(n0InitialSample, alphaValue, deltaIZ, AlternativeMeanIsHigher, k, mux
     SetI = np.zeros(k)
     for i in range(0, k):
         SetI[i] = i
-
     # Step 0c. Calculate eta
     eta = ((2 - 2 * ((1 - alphaValue) ^ (1 / k)))
            ^ (-2 / (n0InitialSample - 1)) - 1) / 2
