@@ -55,6 +55,7 @@ def voting_time_calcs(ballot_length: int) -> tuple:
     return vote_min, vote_mode, vote_max
 
 
+# TODO: add a memo to this for speedup
 def izgbs(
     max_machines: int,
     start_machines: int,

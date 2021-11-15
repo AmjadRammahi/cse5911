@@ -23,7 +23,7 @@ def evaluate_location(location_data: dict) -> dict:
     loc_res = izgbs(
         Settings.MAX_MACHINES,
         start_val,
-        Settings.MIN_ALLOC,
+        Settings.MIN_MACHINES,
         sas_alpha_value,
         location_data[0],
         location_data[1]

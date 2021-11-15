@@ -4,7 +4,7 @@ import logging
 import argparse
 from pprint import pprint
 
-from src.settings import Settings
+from src.settings import load_settings_from_sheet
 from apportionment import apportionment
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
@@ -88,6 +88,9 @@ if __name__ == '__main__':
 
     logging.info(f'reading {args.input_xlsx}')
     voting_config = xlrd.open_workbook(args.input_xlsx)
+
+    # get settigns from input xlsx file
+    load_settings_from_sheet(voting_config.sheet_by_name(u'options'))
 
     # get voting location data from input xlsx file
     location_data = fetch_location_data(voting_config)
