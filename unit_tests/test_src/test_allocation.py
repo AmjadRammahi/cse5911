@@ -73,10 +73,10 @@ def test_allocation_uses_expected_num_machines():
             }
         },
         10,
-        2
+        7
     )
     reset_settings()
 
     machines_used = sum(v['Resource'] for v in result.values())
 
-    assert abs(machines_used - 10) <= 2
+    assert abs(machines_used - 10) <= 7
