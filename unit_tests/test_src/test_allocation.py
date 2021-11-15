@@ -36,18 +36,18 @@ def test_allocation_equal_for_equal_locations():
     result = allocation(
         {
             1: {
-                "Likely or Exp. Voters": 50,
-                "Eligible Voters": 100,
-                "Ballot Length Measure": 2
+                "Likely or Exp. Voters": 100,
+                "Eligible Voters": 200,
+                "Ballot Length Measure": 4
             },
             2: {
-                "Likely or Exp. Voters": 50,
-                "Eligible Voters": 100,
-                "Ballot Length Measure": 2
+                "Likely or Exp. Voters": 100,
+                "Eligible Voters": 200,
+                "Ballot Length Measure": 4
             }
         },
-        10,
-        2
+        100,
+        96
     )
     reset_settings()
 
@@ -73,10 +73,10 @@ def test_allocation_uses_expected_num_machines():
             }
         },
         10,
-        2
+        7
     )
     reset_settings()
 
     machines_used = sum(v['Resource'] for v in result.values())
 
-    assert abs(machines_used - 10) <= 2
+    assert abs(machines_used - 10) <= 7
