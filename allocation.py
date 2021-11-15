@@ -13,7 +13,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     'input_xlsx',
     type=str,
-    help='first positional argument, input xlsx filepath'
+    default='voting_excel.xlsm',
+    help='first positional argument, input xlsx filepath',
+    nargs='?'
 )
 parser.add_argument(
     '--log',
