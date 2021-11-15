@@ -36,18 +36,18 @@ def test_allocation_equal_for_equal_locations():
     result = allocation(
         {
             1: {
-                "Likely or Exp. Voters": 50,
-                "Eligible Voters": 100,
-                "Ballot Length Measure": 2
+                "Likely or Exp. Voters": 100,
+                "Eligible Voters": 200,
+                "Ballot Length Measure": 4
             },
             2: {
-                "Likely or Exp. Voters": 50,
-                "Eligible Voters": 100,
-                "Ballot Length Measure": 2
+                "Likely or Exp. Voters": 100,
+                "Eligible Voters": 200,
+                "Ballot Length Measure": 4
             }
         },
-        10,
-        2
+        100,
+        96
     )
     reset_settings()
 
