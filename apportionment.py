@@ -3,6 +3,7 @@ import time
 import logging
 import argparse
 import multiprocessing
+import os
 from tqdm import tqdm
 from pprint import pprint
 from multiprocessing import Pool
@@ -14,10 +15,15 @@ from src.evaluate_location import evaluate_location
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
+    'dir',
+    type = str,
+    help='first positional argument, input working dir',
+)
+parser.add_argument(
     'input_xlsx',
     type=str,
     default='voting_excel.xlsm',
-    help='first positional argument, input xlsx filepath',
+    help='second positional argument, input xlsx filepath',
     nargs='?'
 )
 parser.add_argument(
@@ -66,8 +72,11 @@ if __name__ == '__main__':
 
     # =========================================================================
     # Setup
-
+    os.chdir(args.dir)
+    logging.info(f'Program Initializing...')
     logging.info(f'reading {args.input_xlsx}')
+    print("Current Path: ", os.getcwd())
+    print("open_workbook target: ", args.input_xlsx)
     voting_config = xlrd.open_workbook(args.input_xlsx)
 
     # get voting location data from input xlsx file
@@ -78,7 +87,11 @@ if __name__ == '__main__':
 
     start_time = time.perf_counter()
 
-    results = apportionment(location_data)
+    try:
+        results = apportionment(location_data)
+    except:
+        logging.info(f'fatal error')
+        input()
 
     pprint(results)
 
