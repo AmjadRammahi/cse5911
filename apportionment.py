@@ -16,7 +16,7 @@ from src.evaluate_location import evaluate_location
 parser = argparse.ArgumentParser()
 parser.add_argument(
     'dir',
-    type = str,
+    type=str,
     help='first positional argument, input working dir',
 )
 parser.add_argument(
@@ -34,7 +34,7 @@ parser.add_argument(
 )
 
 
-def apportionment(location_data: dict, service_req: float = Settings.SERVICE_REQ) -> dict:
+def apportionment(location_data: dict, service_req: float) -> dict:
     '''
         Runs apportionment against the given locations.
 
@@ -88,8 +88,8 @@ if __name__ == '__main__':
     start_time = time.perf_counter()
 
     try:
-        results = apportionment(location_data)
-    except:
+        results = apportionment(location_data, Settings.SERVICE_REQ)
+    except Exception:
         logging.info(f'fatal error')
         input()
 

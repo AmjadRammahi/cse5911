@@ -3,8 +3,7 @@ from src.settings import Settings, reset_settings
 from apportionment import apportionment
 
 
-# Super simple test case to ensure apportionment.py runs without error (this
-# test does not validate results).
+# Super simple test case to ensure apportionment.py runs without error (this test does not validate results).
 def test_apportion_no_error():
     Settings.BATCH_SIZE = 1
     Settings.NUM_REPLICATIONS = 3
@@ -20,5 +19,5 @@ def test_apportion_no_error():
     }
     # No assertion needed, test will fail if and only if apportionment throws
     # an error
-    apportionment(location_data)
+    apportionment(location_data, Settings.SERVICE_REQ)
     reset_settings()

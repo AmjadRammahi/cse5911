@@ -4,7 +4,7 @@ import logging
 import argparse
 from pprint import pprint
 
-from src.settings import load_settings_from_sheet
+from src.settings import Settings, load_settings_from_sheet
 from apportionment import apportionment
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
@@ -23,40 +23,28 @@ parser.add_argument(
     default='info',
     help='log level, ex: --log debug'
 )
-parser.add_argument(
-    '--machines',
-    type=int,
-    default=100,
-    help='number of machines'
-)
 
 
-def allocation(
-    location_data: dict,
-    total_machines_available: int,
-    acceptable_resource_miss: int
-) -> dict:
+def allocation(location_data: dict) -> dict:
     '''
         Main function for Allocation.
         Makes use of apportionment to keep service reqs close.
 
         Params:
-            location_data (dict) : location data from xlsx,
-            total_machines_available (int) : number of machines allowed to be allocated,
-            acceptable_resource_miss (int) : number of resources allowed to be un-used.
+            location_data (dict) : location data from xlsx.
 
         Returns:
             (dict) : allocation results by location with expected wait times.
     '''
-    print(f'allocation - machines available: {total_machines_available}')
+    print(f'allocation - machines available: {Settings.NUM_MACHINES}')
 
     upper_service_req = 500
     lower_service_req = 1
     current_total = 0
     num_iterations = 0
 
-    while num_iterations < 20 and \
-            abs(total_machines_available - current_total) > acceptable_resource_miss:
+    while num_iterations < Settings.MAX_ITERATIONS and \
+            abs(Settings.NUM_MACHINES - current_total) > Settings.ACCEPTABLE_RESOURCE_MISS:
         # next service req to try
         current_service_req = (upper_service_req + lower_service_req) * 0.5
 
@@ -69,7 +57,7 @@ def allocation(
         logging.critical(f'allocation - used {current_total} machines at service req: {current_service_req:.2f}')
 
         # updating upper or lower bound
-        if total_machines_available > current_total:
+        if Settings.NUM_MACHINES > current_total:
             upper_service_req = current_service_req
         else:
             lower_service_req = current_service_req
@@ -100,17 +88,8 @@ if __name__ == '__main__':
     # =========================================================================
     # Main
 
-    total_machines_available = args.machines
-    acceptable_resource_miss = 10
-
     start_time = time.perf_counter()
 
-    pprint(
-        allocation(
-            location_data,
-            total_machines_available,
-            acceptable_resource_miss
-        )
-    )
+    pprint(allocation(location_data))
 
     print(f'elapsed time: {time.perf_counter() - start_time}')
