@@ -16,3 +16,13 @@ venv*/
 .coverage
 dist/apportionment.exe
 dist/voting_excel.xlsx
+*.spec
+*.toc
+*.zip
+*.pkg
+*.pyz
+*.html
+*.txt
+*.manifest
+*.exe
+test.xlsm
