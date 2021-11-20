@@ -25,3 +25,4 @@ dist/voting_excel.xlsx
 *.txt
 *.manifest
 *.exe
+test.xlsm
