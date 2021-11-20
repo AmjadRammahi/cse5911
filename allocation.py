@@ -1,7 +1,11 @@
 import xlrd
+import stat
+import editpyxl
 import time
 import logging
 import argparse
+import os
+import sys
 from pprint import pprint
 
 from src.settings import load_settings_from_sheet
@@ -9,7 +13,15 @@ from apportionment import apportionment
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
 
+ALLOCATION_RESULT = 6
 parser = argparse.ArgumentParser()
+parser.add_argument(
+    'dir',
+    type = str,
+    default=os.getcwd(),
+    help='first positional argument, input working dir',
+    nargs='?'
+)
 parser.add_argument(
     'input_xlsx',
     type=str,
@@ -105,12 +117,31 @@ if __name__ == '__main__':
 
     start_time = time.perf_counter()
 
-    pprint(
-        allocation(
+    try:
+        results = allocation(
             location_data,
             total_machines_available,
             acceptable_resource_miss
         )
-    )
+    except:
+        logging.info(f'fatal error')
+        input()
+    pprint(results)
 
-    print(f'elapsed time: {time.perf_counter() - start_time}')
+    try:
+        voting_config = editpyxl.Workbook()
+        voting_config.open(args.input_xlsx)
+        result_sheet = voting_config.active
+        for index in results:
+            cell = result_sheet.cell(row=index+1, column=ALLOCATION_RESULT)
+            cell.value = results[index]['Resource']
+        os.chmod(args.input_xlsx, stat.S_IRWXU)
+        voting_config.save(args.input_xlsx)
+        os.system('start excel.exe ' + args.input_xlsx)
+    except Exception as ex:
+        print('err: ', ex)
+        input("Press enter to exit.")
+        sys.exit()
+    logging.info(f'runtime: {time.perf_counter()-start_time}')
+    logging.info('Done.')
+    input("Press enter to exit.")

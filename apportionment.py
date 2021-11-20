@@ -17,6 +17,7 @@ from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
 from src.evaluate_location import evaluate_location
 
+APPORTIONMENT_RESULT = 5
 parser = argparse.ArgumentParser()
 parser.add_argument(
     'dir',
@@ -105,15 +106,15 @@ if __name__ == '__main__':
         voting_config.open(args.input_xlsx)
         result_sheet = voting_config.active
         for index in results:
-            cell = result_sheet.cell(row=index+1, column=5)
+            cell = result_sheet.cell(row=index+1, column=APPORTIONMENT_RESULT)
             cell.value = results[index]['Resource']
         os.chmod(args.input_xlsx, stat.S_IRWXU)
         voting_config.save(args.input_xlsx)
         os.system('start excel.exe ' + args.input_xlsx)
     except Exception as ex:
-        print(ex)
+        print('err: ', ex)
         input("Press enter to exit.")
         sys.exit()
-    logging.critical(f'runtime: {time.perf_counter()-start_time}')
-    logging.critical('Done.')
+    logging.info(f'runtime: {time.perf_counter()-start_time}')
+    logging.info('Done.')
     input("Press enter to exit.")
