@@ -21,7 +21,7 @@ APPORTIONMENT_RESULT = 5
 parser = argparse.ArgumentParser()
 parser.add_argument(
     'dir',
-    type = str,
+    type=str,
     default=os.getcwd(),
     help='first positional argument, input working dir',
     nargs='?'
@@ -41,7 +41,7 @@ parser.add_argument(
 )
 
 
-def apportionment(location_data: dict, service_req: float = Settings.SERVICE_REQ) -> dict:
+def apportionment(location_data: dict, service_req: float) -> dict:
     '''
         Runs apportionment against the given locations.
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     logging.info(f'reading {args.input_xlsx}')
     print("Current Path: ", os.getcwd())
     print("open_workbook target: ", args.input_xlsx)
-    voting_config = xlrd.open_workbook(args.input_xlsx, on_demand = True)
+    voting_config = xlrd.open_workbook(args.input_xlsx, on_demand=True)
     # get voting location data from input xlsx file
     location_data = fetch_location_data(voting_config)
 
@@ -94,20 +94,22 @@ if __name__ == '__main__':
     start_time = time.perf_counter()
 
     try:
-        results = apportionment(location_data)
-    except:
+        results = apportionment(location_data, Settings.SERVICE_REQ)
+    except Exception:
         logging.info(f'fatal error')
         input()
-    
+
     pprint(results)
 
     try:
         voting_config = editpyxl.Workbook()
         voting_config.open(args.input_xlsx)
         result_sheet = voting_config.active
+
         for index in results:
-            cell = result_sheet.cell(row=index+1, column=APPORTIONMENT_RESULT)
+            cell = result_sheet.cell(row=index + 1, column=APPORTIONMENT_RESULT)
             cell.value = results[index]['Resource']
+
         os.chmod(args.input_xlsx, stat.S_IRWXU)
         voting_config.save(args.input_xlsx)
         os.system('start excel.exe ' + args.input_xlsx)
@@ -115,6 +117,7 @@ if __name__ == '__main__':
         print('err: ', ex)
         input("Press enter to exit.")
         sys.exit()
+
     logging.info(f'runtime: {time.perf_counter()-start_time}')
     logging.info('Done.')
     input("Press enter to exit.")

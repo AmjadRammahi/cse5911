@@ -1,7 +1,6 @@
 import pytest
 import simpy
-from src.voter_sim import voter_sim
-from src.voter_sim import VotingLocation
+from src.voter_sim import VotingLocation, voter_sim
 from src.settings import Settings
 
 

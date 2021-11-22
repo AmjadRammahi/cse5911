@@ -7,6 +7,9 @@ def test_allocation_runs_without_error():
     Settings.BATCH_SIZE = 1
     Settings.NUM_REPLICATIONS = 3
     Settings.NUM_BATCHES = 3 // 1
+    
+    Settings.NUM_MACHINES = 10
+    Settings.ACCEPTABLE_RESOURCE_MISS = 2
     result = allocation(
         {
             1: {
@@ -19,9 +22,7 @@ def test_allocation_runs_without_error():
                 "Eligible Voters": 100,
                 "Ballot Length Measure": 2
             }
-        },
-        10,
-        2
+        }
     )
     reset_settings()
 
@@ -33,6 +34,9 @@ def test_allocation_equal_for_equal_locations():
     Settings.BATCH_SIZE = 1
     Settings.NUM_REPLICATIONS = 3
     Settings.NUM_BATCHES = 3 // 1
+
+    Settings.NUM_MACHINES = 100
+    Settings.ACCEPTABLE_RESOURCE_MISS = 96
     result = allocation(
         {
             1: {
@@ -45,9 +49,7 @@ def test_allocation_equal_for_equal_locations():
                 "Eligible Voters": 200,
                 "Ballot Length Measure": 4
             }
-        },
-        100,
-        96
+        }
     )
     reset_settings()
 
@@ -59,6 +61,9 @@ def test_allocation_uses_expected_num_machines():
     Settings.BATCH_SIZE = 1
     Settings.NUM_REPLICATIONS = 3
     Settings.NUM_BATCHES = 3 // 1
+
+    Settings.NUM_MACHINES = 10
+    Settings.ACCEPTABLE_RESOURCE_MISS = 7
     result = allocation(
         {
             1: {
@@ -71,9 +76,7 @@ def test_allocation_uses_expected_num_machines():
                 "Eligible Voters": 100,
                 "Ballot Length Measure": 2
             }
-        },
-        10,
-        7
+        }
     )
     reset_settings()
 
