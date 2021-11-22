@@ -1,6 +1,7 @@
 pytest
 simpy
 xlrd==1.2.0
+editpyxl
 pandas
 numpy
 scipy

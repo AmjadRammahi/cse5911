@@ -1,11 +1,16 @@
 pytest
 simpy
 xlrd==1.2.0
+editpyxl
 pandas
 numpy
 scipy
+gspread
+tqdm
+autopep8
+snakeviz
 coverage
 pytest-cov
 pytest-mock
 jit
-tqdm
+auto-py-to-exe
