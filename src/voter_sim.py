@@ -3,9 +3,6 @@ import logging
 import numpy as np
 from random import expovariate
 
-from src.settings import Settings
-
-
 # NOTE: this is TandemQueueWQuartile
 
 
@@ -160,7 +157,8 @@ def voter_sim(
         vote_time_min: float,
         vote_time_mode: float,
         vote_time_max: float,
-        num_machines: int
+        num_machines: int,
+        settings: dict
 ) -> list:
     '''
         Executes a voting simulation given various inputs.
@@ -177,7 +175,7 @@ def voter_sim(
             (list) : wait times.
     '''
 
-    sim_time = Settings.POLL_OPEN * 60
+    sim_time = settings['POLL_OPEN'] * 60
 
     # create an environment and start the setup process
     env = simpy.Environment()
