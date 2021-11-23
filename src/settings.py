@@ -104,7 +104,7 @@ def load_settings_from_sheet(options_sheet: Book):
         if data[0] in ['', 'Control', 'Advanced', 'General Settings', 'Allocation Settings']:
             continue
 
-        # int cast anything that explicity should be an int
+        # int cast anything that explicitly should be an int
         if EXPECTED_TYPES.get(data[0]) == int:
             data[1] = int(data[1])
 
