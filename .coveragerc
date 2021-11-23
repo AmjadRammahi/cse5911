@@ -4,5 +4,6 @@ include =
 	src/fetch_location_data.py
 	src/evaluate_location.py
 	src/izgbs.py
+	src/settings.py
 	apportionment.py
 	allocation.py
