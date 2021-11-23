@@ -13,6 +13,7 @@ from pprint import pprint
 from multiprocessing import Pool
 
 from src.settings import Settings
+from src.settings import load_settings_from_sheet
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
 from src.evaluate_location import evaluate_location
@@ -87,6 +88,8 @@ if __name__ == '__main__':
     voting_config = xlrd.open_workbook(args.input_xlsx, on_demand=True)
     # get voting location data from input xlsx file
     location_data = fetch_location_data(voting_config)
+    # get settings from input xlsx file
+    load_settings_from_sheet(voting_config.sheet_by_name(u'options'))
 
     # =========================================================================
     # Main
