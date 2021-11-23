@@ -33,7 +33,7 @@ class VotingLocation(object):
         self.vote_time_max = vote_time_max
         self.voting_machines = simpy.Resource(env, capacity=num_machines)
         self.sim_time = sim_time
-        self.arrival_rt = self.calc_arrival_rate()
+        self.arrival_rt = self.calc_base_arrival_rate()
 
         self.wait_times = []
 
@@ -71,7 +71,7 @@ class VotingLocation(object):
         '''
         return expovariate(1.0 / self.arrival_rt)
 
-    def calc_arrival_rate(self):
+    def calc_base_arrival_rate(self):
         '''
             Calculates an average arrival rate which will allow the expected
             number of voters to arrive at the polling location before it
