@@ -101,7 +101,7 @@ def load_settings_from_sheet(options_sheet: Book):
         data = options_sheet.row_values(row_idx)
 
         # skip empty rows and headers
-        if data[0] in ['', 'Control', 'Advanced']:
+        if data[0] in ['', 'Control', 'Advanced', 'General Settings', 'Allocation Settings']:
             continue
 
         # int cast anything that explicity should be an int
