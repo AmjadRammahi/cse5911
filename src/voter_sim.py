@@ -2,9 +2,6 @@ import simpy
 import logging
 import numpy as np
 from random import expovariate
-from numba import jit
-from src.settings import Settings
-
 
 # NOTE: this is TandemQueueWQuartile
 
@@ -21,13 +18,13 @@ class VotingLocation(object):
             vote_time_max: float,
             sim_time: float
     ):
-        max_voters = int(max_voters) # convert max voters from np.float64 to int type
+        max_voters = int(max_voters)
         self.env = env
         self.voters_dict = {
             f'Voter {i}': {}
             for i in range(max_voters)
         }
-        
+
         self.max_voters = max_voters
         self.expected_voters = expected_voters
         self.vote_time_min = vote_time_min
@@ -162,7 +159,8 @@ def voter_sim(
         vote_time_min: float,
         vote_time_mode: float,
         vote_time_max: float,
-        num_machines: int
+        num_machines: int,
+        settings: dict
 ) -> list:
     '''
         Executes a voting simulation given various inputs.
@@ -179,7 +177,7 @@ def voter_sim(
             (list) : wait times.
     '''
 
-    sim_time = Settings.POLL_OPEN * 60
+    sim_time = settings['POLL_OPEN'] * 60
 
     # create an environment and start the setup process
     env = simpy.Environment()

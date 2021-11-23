@@ -1,8 +1,7 @@
 import pytest
 import simpy
-from src.voter_sim import voter_sim
-from src.voter_sim import VotingLocation
-from src.settings import Settings
+from src.settings import default_settings
+from src.voter_sim import VotingLocation, voter_sim
 
 
 # TODO: can simulate N number of times to reduce variance
@@ -18,7 +17,7 @@ def test_voting_location_init_dict_length():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        sim_time=Settings.POLL_OPEN
+        sim_time=13
     )
     # assert - checking that the correct dictionary size is generated
     # (size == num_voters)
@@ -26,6 +25,8 @@ def test_voting_location_init_dict_length():
 
 
 def test_voter_sim_many_machines():
+    settings = default_settings()
+
     # act
     num_voters = 100
     wait_times = voter_sim(
@@ -34,31 +35,37 @@ def test_voter_sim_many_machines():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        num_machines=100
+        num_machines=100,
+        settings=settings
     )
     # assert - checking that the wait times are all 0.0 if num_machines == num_voters
     assert wait_times.count(0.0) == len(wait_times)
 
 
 def test_voter_sim_non_zero_wait_times():
+    settings = default_settings()
+
     # act
     # voters will be equal to the simulation time (in minutes) which will
     # guarantee that voters will be forced to wait in line because there is
     # only one machine.
-    sim_time = Settings.POLL_OPEN * 60
+    sim_time = 6.5 * 60
     wait_times = voter_sim(
         max_voters=int(sim_time),
         expected_voters=int(sim_time),
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        num_machines=1
+        num_machines=1,
+        settings=settings
     )
     # assert - checking that the wait times are not all 0.0 if num_machines << num_voters
     assert wait_times.count(0.0) != 100
 
 
 def test_voter_sim_zero_initial_wait_time():
+    settings = default_settings()
+
     # act
     wait_times = voter_sim(
         max_voters=100,
@@ -66,7 +73,8 @@ def test_voter_sim_zero_initial_wait_time():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        num_machines=1
+        num_machines=1,
+        settings=settings
     )
     # assert - checking that the first wait time is zero
     assert wait_times[0] == 0.0
@@ -86,12 +94,13 @@ def test_voter_sim_zero_machines_raises():
 
 
 def test_voter_sim_near_expected_should_vote():
-    # Override Settings and have the polls open for only one hour
-    Settings.POLL_OPEN = 1.0
+    settings = default_settings()
+
+    # Override settings and have the polls open for only one hour
     # max_voters = number of minutes the polls are open multiplied by 16 which
     # is approximately double the arrival rate. This guarantees that under the
     # not all voters will vote.
-    max_voters = int(Settings.POLL_OPEN * 60 * 16)
+    max_voters = int(1.0 * 60 * 16)
     # expected_voters will be set to half of the maximum which is similar to
     # most locations in the original Excel file.
     expected_voters = int(max_voters / 2)
@@ -101,7 +110,8 @@ def test_voter_sim_near_expected_should_vote():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        num_machines=10
+        num_machines=10,
+        settings=settings
     )
     # assert - the number of actual voters should be near (+-!0%) the number of
     # expected voters
@@ -149,7 +159,7 @@ def test_generate_voter_random_arrival():
 def test_generate_voter_random_arrival_2():
     # Many more total voters than the previous test. Designed to break the
     # arrival times with a very late average time.
-    num_voters = int(Settings.POLL_OPEN * 60 * 16)
+    num_voters = int(6.5 * 60 * 16)
     sim_time = 60
     env = simpy.Environment()
     location = VotingLocation(
@@ -187,6 +197,8 @@ def test_generate_voter_random_arrival_2():
 
 
 def test_voter_sim_total_voters_must_not_exceed_max():
+    settings = default_settings()
+
     max_voters = 1
     wait_times = voter_sim(
         max_voters=max_voters,
@@ -194,7 +206,8 @@ def test_voter_sim_total_voters_must_not_exceed_max():
         vote_time_min=1,
         vote_time_mode=2,
         vote_time_max=3,
-        num_machines=1
+        num_machines=1,
+        settings=settings
     )
     # assert - total number of voters should never exceed the maximum number of
     # registered voters

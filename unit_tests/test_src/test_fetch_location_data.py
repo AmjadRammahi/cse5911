@@ -1,8 +1,8 @@
 import xlrd
 import pytest
-from src.settings import Settings
 
 from src.fetch_location_data import fetch_location_data
+from src.settings import default_settings
 
 
 # ====================================================================
@@ -16,7 +16,10 @@ def load_location_xlsx() -> xlrd.Book:
 
 
 def test_fetch_location_data_1(load_location_xlsx):
+    settings = default_settings()
+
     # act
-    location_data = fetch_location_data(load_location_xlsx)
+    location_data = fetch_location_data(load_location_xlsx, settings)
+
     # assert
-    assert len(location_data) == Settings.NUM_LOCATIONS
+    assert len(location_data) == 5

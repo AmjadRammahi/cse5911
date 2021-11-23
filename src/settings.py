@@ -1,95 +1,120 @@
 # Project Globals
 
-# NOTE: this class holds all of the Settings needed to run this codebase.
-# Do not create an instance of this class. Instead, if you need to modify
-# a setting, then directly edit the class variable, ex: Settings.MIN_ALLOC_FLG = False
-# from numba import int32, float32
-# from numba.experimental import jitclass
-
-# spec = [
-#     ('POLL_START', float32[:]),
-#     ('POLL_END', float32[:]),
-#     ('POLL_OPEN', float32[:]),
-#     ('BATCH_SIZE', int32),
-#     ('NUM_REPLICATIONS', int32),
-#     ('NUM_BATCHES', float32),
-#     ('MIN_VOTING_MIN', int32),
-#     ('MIN_VOTING_MODE', int32),
-#     ('MIN_VOTING_MAX', int32),
-#     ('MIN_BALLOT', int32),
-#     ('MAX_VOTING_MIN', int32),
-#     ('MAX_VOTING_MODE', int32),
-#     ('MAX_VOTING_MAX', int32),
-#     ('MAX_BALLOT', int32),
-#     ('SERVICE_REQ', float32[:]),
-#     ('MAX_MACHINES', int32),
-#     ('ALPHA_VALUE', float32[:]),
-#     ('DELTA_INDIFFERENCE_ZONE', float32[:]),
-#     ('MIN_ALLOC_FLG', int32),
-#     ('MIN_ALLOC', int32),
-#     ('NUM_LOCATIONS', int32)
-# ]
+from xlrd import Book
 
 
-class Settings:
-    POLL_START = 6.5  # 6:30 am
-    POLL_END = 19.5  # 7:30 pm
-    POLL_OPEN = POLL_END - POLL_START
+EXPECTED_TYPES = {
+    'NUM_LOCATIONS': int,
 
-    BATCH_SIZE = 2
-    NUM_REPLICATIONS = 10
-    NUM_BATCHES = NUM_REPLICATIONS // BATCH_SIZE
+    'POLL_START': (int, float),
+    'POLL_END': (int, float),
+    'POLL_OPEN': (int, float),
 
-    MIN_VOTING_MIN = 6
-    MIN_VOTING_MODE = 8
-    MIN_VOTING_MAX = 12
-    MIN_BALLOT = 0
+    'MAX_MACHINES': int,
+    'MIN_MACHINES': int,
 
-    MAX_VOTING_MIN = 6
-    MAX_VOTING_MODE = 10
-    MAX_VOTING_MAX = 20
-    MAX_BALLOT = 10
+    'SERVICE_REQ': (int, float),
 
-    SERVICE_REQ = 30.0  # waiting time of voter who waits the longest
+    'MIN_VOTING_MIN': (int, float),
+    'MIN_VOTING_MODE': (int, float),
+    'MIN_VOTING_MAX': (int, float),
+    'MIN_BALLOT': (int, float),
 
-    MAX_MACHINES = 200
+    'MAX_VOTING_MIN': (int, float),
+    'MAX_VOTING_MODE': (int, float),
+    'MAX_VOTING_MAX': (int, float),
+    'MAX_BALLOT': (int, float),
 
-    ALPHA_VALUE = 0.05  # probability of rejecting the null hypotheses
-    DELTA_INDIFFERENCE_ZONE = 0.5
+    'NUM_MACHINES': int,
+    'MAX_ITERATIONS': int,
+    'ACCEPTABLE_RESOURCE_MISS': int,
 
-    MIN_ALLOC_FLG = 1  # is minimum allocation requirement
-    MIN_ALLOC = 1
+    'ALPHA_VALUE': (int, float),
+    'DELTA_INDIFFERENCE_ZONE': (int, float),
 
-    NUM_LOCATIONS = 5
+    'BATCH_SIZE': int,
+    'NUM_REPLICATIONS': int,
+    'NUM_BATCHES': int,
+}
 
 
-def reset_settings():
-    Settings.POLL_START = 6.5
-    Settings.POLL_END = 19.5
-    Settings.POLL_OPEN = Settings.POLL_END - Settings.POLL_START
+def validate_settings(settings: dict):
+    '''
+        Checks that the all attrs in settings are present and of the correct type.
 
-    Settings.BATCH_SIZE = 2
-    Settings.NUM_REPLICATIONS = 10
-    Settings.NUM_BATCHES = Settings.NUM_REPLICATIONS // Settings.BATCH_SIZE
+        Params:
+            settings (dict) : settings dict.
 
-    Settings.MIN_VOTING_MIN = 6
-    Settings.MIN_VOTING_MODE = 8
-    Settings.MIN_VOTING_MAX = 12
-    Settings.MIN_BALLOT = 0
+        Returns:
+            None.
+    '''
+    for setting_name, expected_type in EXPECTED_TYPES.items():
+        if setting_name not in settings:
+            print(f'ERROR: missing \'{setting_name}\' in options tab')
+            exit()
 
-    Settings.MAX_VOTING_MIN = 6
-    Settings.MAX_VOTING_MODE = 10
-    Settings.MAX_VOTING_MAX = 20
-    Settings.MAX_BALLOT = 10
+        if not isinstance(settings[setting_name], expected_type):
+            print(f'ERROR: \'{setting_name}\' should be a ' +
+                  f'{expected_type.__name__}, got a {type(settings[setting_name]).__name__}')
+            exit()
 
-    Settings.SERVICE_REQ = 30.0
 
-    Settings.MAX_MACHINES = 200
+def load_settings_from_sheet(options_sheet: Book):
+    settings = {}
 
-    Settings.ALPHA_VALUE = 0.05
-    Settings.DELTA_INDIFFERENCE_ZONE = 0.5
+    for row_idx in range(options_sheet.nrows):
+        data = options_sheet.row_values(row_idx)
 
-    Settings.MIN_ALLOC_FLG = 1
-    Settings.MIN_ALLOC = 1
+        # skip empty rows and headers
+        if data[0] in ['', 'Control', 'Advanced', 'General Settings', 'Allocation Settings']:
+            continue
 
-    Settings.NUM_LOCATIONS = 5
+        # int cast anything that explicity should be an int
+        if EXPECTED_TYPES.get(data[0]) == int:
+            data[1] = int(data[1])
+
+        settings[data[0]] = data[1]
+
+    # update derived settings
+    settings['POLL_OPEN'] = settings['POLL_END'] - settings['POLL_START']
+    settings['NUM_BATCHES'] = settings['NUM_REPLICATIONS'] // settings['BATCH_SIZE']
+
+    validate_settings(settings)
+
+    return settings
+
+
+def default_settings():
+    return {
+        'NUM_LOCATIONS': 5,
+
+        'POLL_START': 6.5,
+        'POLL_END': 19.5,
+        'POLL_OPEN': 19.5 - 6.5,
+
+        'MAX_MACHINES': 200,
+        'MIN_MACHINES': 1,
+
+        'SERVICE_REQ': 30.0,
+
+        'MIN_VOTING_MIN': 6,
+        'MIN_VOTING_MODE': 8,
+        'MIN_VOTING_MAX': 12,
+        'MIN_BALLOT': 0,
+
+        'MAX_VOTING_MIN': 6,
+        'MAX_VOTING_MODE': 10,
+        'MAX_VOTING_MAX': 20,
+        'MAX_BALLOT': 10,
+
+        'NUM_MACHINES': 5,
+        'MAX_ITERATIONS': 20,
+        'ACCEPTABLE_RESOURCE_MISS': 10,
+
+        'ALPHA_VALUE': 0.05,
+        'DELTA_INDIFFERENCE_ZONE': 0.5,
+
+        'BATCH_SIZE': 2,
+        'NUM_REPLICATIONS': 10,
+        'NUM_BATCHES': 10 // 2
+    }
