@@ -38,6 +38,8 @@ EXPECTED_TYPES = {
     'BATCH_SIZE': int,
     'NUM_REPLICATIONS': int,
     'NUM_BATCHES': int,
+
+    'ARRIVAL_PATTERNS': list
 }
 
 
