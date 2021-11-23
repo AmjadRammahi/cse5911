@@ -85,6 +85,7 @@ if __name__ == '__main__':
     print("open_workbook target: ", args.input_xlsx)
     voting_config = xlrd.open_workbook(args.input_xlsx, on_demand=True)
 
+    # get settings from input xlsx file
     settings = load_settings_from_sheet(voting_config.sheet_by_name(u'options'))
 
     # get voting location data from input xlsx file
