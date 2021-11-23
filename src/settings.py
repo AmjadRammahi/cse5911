@@ -98,6 +98,7 @@ def validate_settings():
             print(f'ERROR: \'{setting_name}\' should be a ' +
                   f'{expected_type.__name__}, got a {type(value).__name__}')
             exit()
+        # TODO: validate arrival patterns
 
 
 def load_settings_from_sheet(options_sheet: Book):
