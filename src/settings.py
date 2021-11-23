@@ -74,6 +74,8 @@ class Settings:
     NUM_REPLICATIONS = 20
     NUM_BATCHES = NUM_REPLICATIONS // BATCH_SIZE
 
+    ARRIVAL_PATTERNS = []*3
+
 
 def validate_settings():
     '''
@@ -108,7 +110,10 @@ def load_settings_from_sheet(options_sheet: Book):
         if EXPECTED_TYPES.get(data[0]) == int:
             data[1] = int(data[1])
 
-        setattr(Settings, data[0], data[1])
+        if data[0].startswith('PATTERN'):
+            Settings.ARRIVAL_PATTERNS.append([data[1], data[2], data[3]])
+        else:
+            setattr(Settings, data[0], data[1])
 
     # update derived settings
     Settings.POLL_OPEN = Settings.POLL_END - Settings.POLL_START
