@@ -8,12 +8,12 @@ def evaluate_location(inputs: tuple) -> dict:
         Runs IZGBS on a specified location.
 
         Params:
-            inputs (tuple) : location data, settings.
+            inputs (tuple) : location data, settings, memo.
 
         Returns:
             (dict) : results.
     '''
-    location_data, settings = inputs
+    location_data, settings, memo = inputs
 
     best_result = {}
 
@@ -24,7 +24,8 @@ def evaluate_location(inputs: tuple) -> dict:
         start_val,
         settings['MIN_MACHINES'],
         location_data,
-        settings
+        settings,
+        memo
     )
 
     loc_feas = []

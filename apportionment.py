@@ -40,7 +40,7 @@ parser.add_argument(
 )
 
 
-def apportionment(location_data: dict, settings: dict) -> dict:
+def apportionment(location_data: dict, settings: dict, memo: dict = {}) -> dict:
     '''
         Runs apportionment against the given locations.
 
@@ -55,7 +55,7 @@ def apportionment(location_data: dict, settings: dict) -> dict:
     '''
     # NOTE: locations start at 1, not 0
     location_params = [
-        (location_data[i + 1], settings)
+        (location_data[i + 1], settings, memo)
         for i in range(settings['NUM_LOCATIONS'])
     ]
 
@@ -90,13 +90,15 @@ if __name__ == '__main__':
     # get voting location data from input xlsx file
     location_data = fetch_location_data(voting_config, settings)
 
+    manager = multiprocessing.Manager()
+
     # =========================================================================
     # Main
 
     start_time = time.perf_counter()
 
     try:
-        results = apportionment(location_data, settings)
+        results = apportionment(location_data, settings, manager.dict())
     except Exception as e:
         logging.info(f'fatal error')
         input()

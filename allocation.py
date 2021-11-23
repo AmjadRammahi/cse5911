@@ -40,14 +40,15 @@ parser.add_argument(
 )
 
 
-def allocation(location_data: dict, settings: dict) -> dict:
+def allocation(location_data: dict, settings: dict, memo: dict = {}) -> dict:
     '''
         Main function for Allocation.
         Makes use of apportionment to keep service reqs close.
 
         Params:
             location_data (dict) : location data from xlsx,
-            settings (dict) : sheet settings.
+            settings (dict) : sheet settings,
+            memo (dict) : memoization dict.
 
         Returns:
             (dict) : allocation results by location with expected wait times.
@@ -62,21 +63,21 @@ def allocation(location_data: dict, settings: dict) -> dict:
     while num_iterations < settings['MAX_ITERATIONS'] and \
             abs(settings['NUM_MACHINES'] - current_total) > settings['ACCEPTABLE_RESOURCE_MISS']:
         # next service req to try
-        current_service_req = (upper_service_req + lower_service_req) * 0.5
+        settings['SERVICE_REQ'] = (upper_service_req + lower_service_req) * 0.5
 
         # running apportionment on all locations
-        logging.critical(f'allocation - running apportionment with service req: {current_service_req:.2f}')
-        results = apportionment(location_data, settings)
+        logging.critical(f'allocation - running apportionment with service req: {settings["SERVICE_REQ"]:.2f}')
+        results = apportionment(location_data, settings, memo)
 
         # collecting new total
         current_total = sum(res['Resource'] for res in results.values())
-        logging.critical(f'allocation - used {current_total} machines at service req: {current_service_req:.2f}')
+        logging.critical(f'allocation - used {current_total} machines at service req: {settings["SERVICE_REQ"]:.2f}')
 
         # updating upper or lower bound
         if settings['NUM_MACHINES'] > current_total:
-            upper_service_req = current_service_req
+            upper_service_req = settings['SERVICE_REQ']
         else:
-            lower_service_req = current_service_req
+            lower_service_req = settings['SERVICE_REQ']
 
         num_iterations += 1
 
@@ -101,18 +102,20 @@ if __name__ == '__main__':
     settings = load_settings_from_sheet(voting_config.sheet_by_name(u'options'))
 
     # get voting location data from input xlsx file
-    location_data = fetch_location_data(voting_config)
+    location_data = fetch_location_data(voting_config, settings)
+
+    manager = multiprocessing.Manager()
 
     # =========================================================================
     # Main
 
     start_time = time.perf_counter()
 
-    try:
-        results = allocation(location_data)
-    except Exception:
-        logging.info(f'fatal error')
-        input()
+    # try:
+    results = allocation(location_data, settings, manager.dict())
+    # except Exception:
+    # logging.info(f'fatal error')
+    # input()
 
     pprint(results)
 
