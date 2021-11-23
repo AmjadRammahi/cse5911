@@ -1,18 +1,16 @@
-from editpyxl import workbook
+import os
+import sys
 import xlrd
 import stat
-import editpyxl
 import time
+import editpyxl
 import logging
 import argparse
 import multiprocessing
-import os
-import sys
 from tqdm import tqdm
 from pprint import pprint
 from multiprocessing import Pool
 
-from src.settings import Settings
 from src.settings import load_settings_from_sheet
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
@@ -42,14 +40,14 @@ parser.add_argument(
 )
 
 
-def apportionment(location_data: dict, service_req: float) -> dict:
+def apportionment(location_data: dict, settings: dict, memo: dict = {}) -> dict:
     '''
         Runs apportionment against the given locations.
 
         Params:
             location_data (dict) :
                 contains the amt of voters and the ballot length for each location,
-            service_req (float) : max service requirement.
+            settings (dict) : sheet settings.
 
         Returns:
             (dict) : locations with the min feasible
@@ -57,8 +55,8 @@ def apportionment(location_data: dict, service_req: float) -> dict:
     '''
     # NOTE: locations start at 1, not 0
     location_params = [
-        (location_data[i + 1], service_req)
-        for i in range(Settings.NUM_LOCATIONS)
+        (location_data[i + 1], settings, memo)
+        for i in range(settings['NUM_LOCATIONS'])
     ]
 
     pool = Pool()
@@ -86,10 +84,14 @@ if __name__ == '__main__':
     print("Current Path: ", os.getcwd())
     print("open_workbook target: ", args.input_xlsx)
     voting_config = xlrd.open_workbook(args.input_xlsx, on_demand=True)
-    # get voting location data from input xlsx file
-    location_data = fetch_location_data(voting_config)
+
     # get settings from input xlsx file
-    load_settings_from_sheet(voting_config.sheet_by_name(u'options'))
+    settings = load_settings_from_sheet(voting_config.sheet_by_name(u'options'))
+
+    # get voting location data from input xlsx file
+    location_data = fetch_location_data(voting_config, settings)
+
+    manager = multiprocessing.Manager()
 
     # =========================================================================
     # Main
@@ -97,8 +99,8 @@ if __name__ == '__main__':
     start_time = time.perf_counter()
 
     try:
-        results = apportionment(location_data, Settings.SERVICE_REQ)
-    except Exception:
+        results = apportionment(location_data, settings, manager.dict())
+    except Exception as e:
         logging.info(f'fatal error')
         input()
 

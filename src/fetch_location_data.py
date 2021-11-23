@@ -1,17 +1,16 @@
 from xlrd import Book
 
-from src.settings import Settings
-
 
 COLUMN_NAMES = ['Likely or Exp. Voters', 'Eligible Voters', 'Ballot Length Measure']
 
 
-def fetch_location_data(voting_config: Book) -> dict:
+def fetch_location_data(voting_config: Book, settings: dict) -> dict:
     '''
         Fetches the locations sheet from the input xlsx as a dict.
 
         Params:
-            voting_config (xlrd.Book) : input xlsx sheet.
+            voting_config (xlrd.Book) : input xlsx sheet,
+            settings (dict) : sheet settings.
 
         Returns:
             (dict) : location sheet as a dict.
@@ -20,7 +19,7 @@ def fetch_location_data(voting_config: Book) -> dict:
 
     location_data = {}
 
-    for i in range(1, Settings.NUM_LOCATIONS + 1):
+    for i in range(1, settings['NUM_LOCATIONS'] + 1):
         data = map(int, location_sheet.row_values(i)[1:])  # [1:] drops ID column
         location_data[i] = dict(zip(COLUMN_NAMES, data))
 
