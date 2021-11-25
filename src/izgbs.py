@@ -1,9 +1,7 @@
 import math
 import logging
-import numpy as np
 import scipy.stats as st
-from statistics import mean
-from src.voter_sim import voter_sim
+from src.AKPIp1 import AKPIp1
 
 
 def voting_time_calcs(ballot_length: int, settings: dict) -> tuple:
@@ -40,18 +38,15 @@ def voting_time_calcs(ballot_length: int, settings: dict) -> tuple:
 
 
 def izgbs(
-    max_machines: int,
-    start_machines: int,
-    min_machines: int,
     location_data: dict,
     settings: dict,
     memo: dict = {}
 ) -> dict:
     '''
         Main IZGBS function.
+
         Params:
             max_machines (int) : maximum allowed number of machines,
-            start_machines (int) : starting number of machines to test,
             min_machines (int) : minimum allowed number of machines,
             location_data (list) : location data,
             settings (dict) : sheet settings,
@@ -67,26 +62,21 @@ def izgbs(
 
     # calculate voting times
     vote_min, vote_mode, vote_max = voting_time_calcs(ballot_length, settings)
-    sas_alpha_value = settings['ALPHA_VALUE'] / math.log2(settings['MAX_MACHINES'] - 1)
 
-    # create a dataframe for total number of machines
-    feasible_dict = {
-        num_m + 1: {
-            'Machines': num_m + 1,
-            'Feasible': 0,
-            'BatchAvg': 0,
-            'BatchMaxAvg': 0
-        }
-        for num_m in range(min_machines, max_machines)
-    }
+    if settings['MAX_MACHINES'] - settings['MIN_MACHINES'] > 2:
+        sas_alpha_value = settings['ALPHA_VALUE'] / math.log2(settings['MAX_MACHINES'] - settings['MIN_MACHINES'])
+    else:
+        sas_alpha_value = settings['ALPHA_VALUE']
 
-    # start with the start value specified
-    hypotheses_remain = True
-    num_machines = start_machines
-    cur_upper = max_machines
-    cur_lower = min_machines
+    cur_upper = settings['MAX_MACHINES']
+    cur_lower = settings['MIN_MACHINES']
+    final_avg_wait_time = None
+    final_max_wait_time = None
+    final_quantile_wait_time = None
 
-    while hypotheses_remain:
+    while cur_upper > cur_lower + 1:
+        num_machines = math.ceil((cur_upper + cur_lower) / 2)
+
         logging.info(f'Current upper bound: {cur_upper}')
         logging.info(f'Current lower bound: {cur_lower}')
         logging.info(f'\tTesting with: {num_machines}')
@@ -96,81 +86,30 @@ def izgbs(
         key = f'{max_voters},{expected_voters},{ballot_length},{num_machines}'
 
         if key in memo:
-            avg_wait_time_avg, max_wait_time_avg, max_wait_time_std = memo[key]
+            # mean_is_higher, avg_wait, max_wait, quantile_wait = memo[key]
+            mean_is_higher, avg_wait, max_wait = memo[key]
         else:
-            batch_avg_wait_times = [[] for _ in range(settings['NUM_BATCHES'])]
-            batch_max_wait_times = [[] for _ in range(settings['NUM_BATCHES'])]
+            # mean_is_higher, avg_wait, max_wait, quantile_wait = AKPIp1(
+            mean_is_higher, avg_wait, max_wait = AKPIp1(
+                sas_alpha_value=sas_alpha_value,
+                max_voters=max_voters,
+                expected_voters=expected_voters,
+                vote_min=vote_min,
+                vote_mode=vote_mode,
+                vote_max=vote_max,
+                num_machines=num_machines,
+                settings=settings
+            )
 
-            # =====================================
+            memo[key] = (mean_is_higher, avg_wait, max_wait)  # , quantile_wait)
 
-            # TODO: use AKPI
-
-            for i in range(settings['NUM_REPLICATIONS']):
-                # calculate voting times
-                wait_times = voter_sim(
-                    max_voters=max_voters,
-                    expected_voters=expected_voters,
-                    vote_time_min=vote_min,
-                    vote_time_mode=vote_mode,
-                    vote_time_max=vote_max,
-                    num_machines=num_machines,
-                    settings=settings
-                )
-
-                batch_avg_wait_times[i % settings['NUM_BATCHES']].append(mean(wait_times))
-                batch_max_wait_times[i % settings['NUM_BATCHES']].append(max(wait_times))
-
-            # =====================================
-
-            # reduce individual batches to their mean's
-            avg_wait_times = [
-                mean(batch)
-                for batch in batch_avg_wait_times
-            ]
-            max_wait_times = [
-                mean(batch)
-                for batch in batch_max_wait_times
-            ]
-
-            # collect statistics
-            avg_wait_time_avg = mean(avg_wait_times)
-            max_wait_time_avg = mean(max_wait_times)
-            max_wait_time_std = np.std(max_wait_times)
-
-            memo[key] = (avg_wait_time_avg, max_wait_time_avg, max_wait_time_std)
-
-        # populate results
-        feasible_dict[num_machines]['BatchAvg'] = avg_wait_time_avg
-        feasible_dict[num_machines]['BatchMaxAvg'] = max_wait_time_avg
-
-        # calculate test statistic (p)
-        if max_wait_time_std > 0:  # NOTE: > 0, avoiding divide by 0 error
-            z = (max_wait_time_avg - settings['SERVICE_REQ'] + settings['DELTA_INDIFFERENCE_ZONE']) / (max_wait_time_std / math.sqrt(settings['NUM_BATCHES']))
-            p = st.norm.cdf(z)
-
-            if p < sas_alpha_value:
-                # move to lower half
-
-                for key in feasible_dict:
-                    if key >= num_machines:
-                        feasible_dict[key]['Feasible'] = 1
-
-                cur_upper = num_machines
-                num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
-            else:
-                # move to upper half
-                feasible_dict[num_machines]['Feasible'] = 0
-                cur_lower = num_machines
-                num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
+        if mean_is_higher:
+            cur_lower = num_machines
         else:
-            # move to lower half
-            feasible_dict[num_machines]['Feasible'] = 0
             cur_upper = num_machines
-            num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 
-        # check if there are hypotheses left to test
-        hypotheses_remain = cur_lower < cur_upper and cur_lower < num_machines < cur_upper
+            final_avg_wait_time = avg_wait
+            final_max_wait_time = max_wait
+            # final_quantile_wait_time = quantile_wait
 
-    logging.info(feasible_dict)
-
-    return feasible_dict
+    return num_machines, final_avg_wait_time, final_max_wait_time  # , final_quantile_wait_time

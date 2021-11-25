@@ -32,9 +32,11 @@ EXPECTED_TYPES = {
     'ALPHA_VALUE': (int, float),
     'DELTA_INDIFFERENCE_ZONE': (int, float),
 
+    'INITIAL_SAMPLE_SIZE': int,
     'BATCH_SIZE': int,
     'NUM_REPLICATIONS': int,
     'NUM_BATCHES': int,
+    'OBJECTIVE_QUANTILE_VALUE': float
 }
 
 
@@ -114,7 +116,9 @@ def default_settings():
         'ALPHA_VALUE': 0.05,
         'DELTA_INDIFFERENCE_ZONE': 0.5,
 
-        'BATCH_SIZE': 2,
+        'INITIAL_SAMPLE_SIZE': 10,
+        'BATCH_SIZE': 10,
         'NUM_REPLICATIONS': 10,
-        'NUM_BATCHES': 10 // 2
+        'NUM_BATCHES': 10 // 2,
+        'OBJECTIVE_QUANTILE_VALUE': 0.95
     }

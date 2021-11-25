@@ -15,6 +15,7 @@ from src.settings import load_settings_from_sheet
 from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
 from src.evaluate_location import evaluate_location
+from src.izgbs import izgbs
 
 APPORTIONMENT_RESULT = 5
 parser = argparse.ArgumentParser()
@@ -40,12 +41,12 @@ parser.add_argument(
 )
 
 
-def apportionment(location_data: dict, settings: dict, memo: dict = {}) -> dict:
+def apportionment(location_data: list, settings: dict, memo: dict = {}) -> dict:
     '''
         Runs apportionment against the given locations.
 
         Params:
-            location_data (numpy array) :
+            location_data (list) :
                 contains the amt of voters and the ballot length for each location,
             settings (dict) : sheet settings.
 
