@@ -16,7 +16,8 @@ from src.util import set_logging_level
 from src.fetch_location_data import fetch_location_data
 from src.evaluate_location import evaluate_location
 
-APPORTIONMENT_RESULT = 5
+APPORTIONMENT_RESULT_COLUMN = 5
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
     'dir',
@@ -112,10 +113,9 @@ if __name__ == '__main__':
         result_sheet = voting_config['locations']
 
         for index in results:
-            cell = result_sheet.cell(row=index + 1, column=APPORTIONMENT_RESULT)
+            cell = result_sheet.cell(row=index + 1, column=APPORTIONMENT_RESULT_COLUMN)
             cell.value = results[index]['Resource']
 
-        # os.chmod(args.input_xlsx, stat.S_IRWXU)
         tmp_name = f'{args.input_xlsx}-tmp'
         voting_config.save(tmp_name)
         os.remove(args.input_xlsx)
