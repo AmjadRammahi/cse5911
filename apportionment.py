@@ -109,14 +109,17 @@ if __name__ == '__main__':
     try:
         voting_config = editpyxl.Workbook()
         voting_config.open(args.input_xlsx)
-        result_sheet = voting_config.active
+        result_sheet = voting_config['locations']
 
         for index in results:
             cell = result_sheet.cell(row=index + 1, column=APPORTIONMENT_RESULT)
             cell.value = results[index]['Resource']
 
-        os.chmod(args.input_xlsx, stat.S_IRWXU)
-        voting_config.save(args.input_xlsx)
+        # os.chmod(args.input_xlsx, stat.S_IRWXU)
+        tmp_name = f'{args.input_xlsx}-tmp'
+        voting_config.save(tmp_name)
+        os.remove(args.input_xlsx)
+        os.rename(tmp_name, args.input_xlsx)
         os.system('start excel.exe ' + args.input_xlsx)
     except Exception as ex:
         print('err: ', ex)
