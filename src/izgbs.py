@@ -73,13 +73,13 @@ def izgbs(
 
     # create a dataframe for total number of machines
     feasible_dict = {
-        num_m + 1: {
-            'Machines': num_m + 1,
+        num_m: {
+            'Machines': num_m,
             'Feasible': 0,
             'BatchAvg': 0,
             'BatchMaxAvg': 0
         }
-        for num_m in range(min_machines, max_machines)
+        for num_m in range(min_machines, max_machines + 1)
     }
 
     # start with the start value specified
@@ -105,10 +105,8 @@ def izgbs(
 
             # =====================================
 
-            # TODO: use AKPI
-
+            # calculate voting times
             for i in range(settings['NUM_REPLICATIONS']):
-                # calculate voting times
                 wait_times = voter_sim(
                     max_voters=max_voters,
                     expected_voters=expected_voters,
@@ -152,21 +150,23 @@ def izgbs(
 
             if p < sas_alpha_value:
                 # move to lower half
-
-                for key in feasible_dict:
-                    if key >= num_machines:
-                        feasible_dict[key]['Feasible'] = 1
+                for m in feasible_dict:
+                    if m >= num_machines:
+                        feasible_dict[m]['Feasible'] = 1
 
                 cur_upper = num_machines
                 num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
             else:
                 # move to upper half
-                feasible_dict[num_machines]['Feasible'] = 0
                 cur_lower = num_machines
                 num_machines = math.floor((cur_upper - num_machines) / 2) + cur_lower
         else:
+            # NOTE: this will always be reached if settings['NUM_BATCHES'] == 1 - can cause weird behavior
             # move to lower half
-            feasible_dict[num_machines]['Feasible'] = 0
+            for m in feasible_dict:
+                if m >= num_machines:
+                    feasible_dict[m]['Feasible'] = 1
+
             cur_upper = num_machines
             num_machines = math.floor((cur_upper - cur_lower) / 2) + cur_lower
 
