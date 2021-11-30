@@ -98,7 +98,7 @@ def test_izgbs_all_feasible_with_inf_service_req():
     results = izgbs(
         4,
         3,
-        0,
+        1,
         {
             'Eligible Voters': 10000,
             'Likely or Exp. Voters': 20000,

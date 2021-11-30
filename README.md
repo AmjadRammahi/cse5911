@@ -28,11 +28,14 @@ pip install -r requirements.txt
 python3 apportionment.py voting_excel.xlsx
 ```
 
-## TODOs
-* Remove pandas from the codebase
-* Unit test the IZGBS code
+# Alternate Usage
+```
+make
+```
+Open voting_excel.xlsm - press either the allocation or apportionment buttons
 
-## Notes
+
+# Notes
 * Initial runtime of the code was 1622.43 seconds (benchmarked on OSC).
 
 * Apportionment - Infinite resources per locations - goal: min resources that meet specified wait time req.

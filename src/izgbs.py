@@ -73,13 +73,13 @@ def izgbs(
 
     # create a dataframe for total number of machines
     feasible_dict = {
-        num_m: {
-            'Machines': num_m,
+        num_m + 1: {
+            'Machines': num_m + 1,
             'Feasible': 0,
             'BatchAvg': 0,
             'BatchMaxAvg': 0
         }
-        for num_m in range(min_machines, max_machines + 1)
+        for num_m in range(min_machines, max_machines)
     }
 
     # start with the start value specified

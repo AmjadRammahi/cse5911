@@ -134,10 +134,11 @@ if __name__ == '__main__':
         os.rename(tmp_name, args.input_xlsx)
         os.system('start excel.exe ' + args.input_xlsx)
     except Exception as ex:
+        logging.critical(f'runtime: {time.perf_counter()-start_time}')
         print('err: ', ex)
         input("Press enter to exit.")
         sys.exit()
 
-    logging.info(f'runtime: {time.perf_counter()-start_time}')
+    logging.critical(f'runtime: {time.perf_counter()-start_time}')
     logging.info('Done.')
     input("Press enter to exit.")
