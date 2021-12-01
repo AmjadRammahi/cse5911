@@ -83,6 +83,32 @@ class VotingLocation(object):
         '''
         return self.sim_time / self.expected_voters
 
+    def calc_variable_arrival_rates(self):
+        '''
+            Calculates the arrival rates for each window of time defined in the
+            Excel settings sheet. This function is designed so that that the
+            average arrival rate for the entire day does not exceed the base
+            arrival rate.
+
+        Returns:
+            (array) : arrival rates for each defined period of time
+        '''
+        # Stores the sum of all arrival rate modifiers from Settings
+        arrival_rt_modifier_sum = 0
+        modifier_index = 2
+        for i in range(Settings.ARRIVAL_PATTERNS):
+            arrival_rt_modifier_sum += Settings.ARRIVAL_PATTERNS[i][modifier_index]
+
+        arrival_rt_modifier_avg = arrival_rt_modifier_sum / len(Settings.ARRIVAL_PATTERNS)
+        # Calculates the multiplier to be used when normalizing the arrival rates
+        multiplier = 1 / arrival_rt_modifier_avg
+        arrival_rates = []*3
+        for i in range(Settings.ARRIVAL_PATTERNS):
+            arrival_rates.append([Settings.ARRIVAL_PATTERNS[i][0], Settings.ARRIVAL_PATTERNS[i][1],
+                                 (Settings.ARRIVAL_PATTERNS[i][modifier_index] * multiplier)])
+
+        return arrival_rates
+
     def voter(self, name: str) -> None:
         '''
             Marks a potential voter as having voted.
