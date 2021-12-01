@@ -34,6 +34,8 @@ class VotingLocation(object):
         self.voting_machines = simpy.Resource(env, capacity=num_machines)
         self.sim_time = sim_time
         self.arrival_rt = self.calc_base_arrival_rate()
+        self.variable_arrival = []*3
+        self.calc_variable_arrival_rates()
 
         self.wait_times = []
 
@@ -69,7 +71,7 @@ class VotingLocation(object):
             Returns:
                 (float) : voter iter-arrival time.
         '''
-        return expovariate(1.0 / self.arrival_rt)
+        return expovariate(1.0 / self.arrival_rt_at_time())
 
     def calc_base_arrival_rate(self):
         '''
@@ -91,23 +93,34 @@ class VotingLocation(object):
             arrival rate.
 
         Returns:
-            (array) : arrival rates for each defined period of time
+            n/a
         '''
         # Stores the sum of all arrival rate modifiers from Settings
         arrival_rt_modifier_sum = 0
         modifier_index = 2
-        for i in range(Settings.ARRIVAL_PATTERNS):
+        for i in range(len(Settings.ARRIVAL_PATTERNS)):
             arrival_rt_modifier_sum += Settings.ARRIVAL_PATTERNS[i][modifier_index]
 
         arrival_rt_modifier_avg = arrival_rt_modifier_sum / len(Settings.ARRIVAL_PATTERNS)
         # Calculates the multiplier to be used when normalizing the arrival rates
         multiplier = 1 / arrival_rt_modifier_avg
-        arrival_rates = []*3
-        for i in range(Settings.ARRIVAL_PATTERNS):
-            arrival_rates.append([Settings.ARRIVAL_PATTERNS[i][0], Settings.ARRIVAL_PATTERNS[i][1],
+        for i in range(len(Settings.ARRIVAL_PATTERNS)):
+            self.variable_arrival.append([Settings.ARRIVAL_PATTERNS[i][0], Settings.ARRIVAL_PATTERNS[i][1],
                                  (Settings.ARRIVAL_PATTERNS[i][modifier_index] * multiplier)])
 
-        return arrival_rates
+    def arrival_rt_at_time(self):
+        '''
+
+        Returns:
+
+        '''
+        # Convert sim_time to equivalent "real" time (24-hour format)
+        current_time = (self.env.now / 60) + Settings.POLL_START
+        for i in range(len(self.variable_arrival)):
+            if self.variable_arrival[i][1] >= current_time >= self.variable_arrival[i][0]:
+                # If the current env time is inside the range, return the corresponding
+                # arrival rate
+                return self.variable_arrival[i][2]
 
     def voter(self, name: str) -> None:
         '''
