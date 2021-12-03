@@ -5,13 +5,13 @@ This software can be run in two different ways:
 2. On the command line by running the Python scripts directly
 
 # Excel Usage
-First run the included makefile to create the `.exe` windows executables. Open a terminal and type the following command to run the makefile:
+First run the included makefile to create the `.exe` Windows executables. Open a terminal and type the following command to run the makefile:
 
 ```
 make
 ```
 
-Next, use Excel to open voting_exce.xlsm and press either the allocation or apportionment button to run the associated program. The simulation output will be automatically populated in the Excel file.
+Next, use Excel to open voting_excel.xlsm and press either the allocation or apportionment button to run the associated program. The simulation output will be automatically populated in the Excel file.
 
 # Command Line Usage
 Open a terminal and run the following command to install all of the necessary dependencies for the software.
